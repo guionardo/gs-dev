@@ -1,6 +1,7 @@
 # gs-dev
 Development assistant
 
+[![CodeQL](https://github.com/guionardo/gs-dev/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/guionardo/gs-dev/actions/workflows/codeql-analysis.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/golang-standards/project-layout?style=flat-square)](https://goreportcard.com/report/github.com/guionardo/gs-dev)
 
 ## Development setup
