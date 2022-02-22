@@ -1,8 +1,7 @@
 author: Guionardo Furlan <guionardo@gmail.com>
-license: MIT
 viper: true
 license:
-  header: 
+  header: "Development assistant"
   text: |
     MIT License
 
