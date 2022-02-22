@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"syscall"
 
 	"github.com/guionardo/gs-dev/app"
 	"github.com/guionardo/gs-dev/configs"
+	pathtools "github.com/guionardo/gs-dev/internal/path_tools"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 )
@@ -28,9 +28,8 @@ func SetupInit(cmd *cobra.Command) {
 		return
 	}
 	if cfg.ErrorCode == configs.ERROR_CONF_PATH_NOT_FOUND {
-		cmd.Printf("+ Creating configuration path: %s\n", configs.ConfigurationPath)
-		syscall.Umask(0)
-		if err := os.Mkdir(configs.ConfigurationPath, os.ModeSticky|os.ModePerm); err != nil {
+		cmd.Printf("+ Creating configuration path: %s\n", configs.ConfigurationPath)		
+		if err := pathtools.CreatePath(configs.ConfigurationPath); err != nil {
 			cmd.PrintErrf("  ! FAILED: %v\n", err)
 			return
 		}
