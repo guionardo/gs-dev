@@ -1,74 +1,84 @@
 package setup
 
 import (
-	"errors"
-	"fmt"
 	"os"
 	"path"
+	"time"
 
-	"github.com/guionardo/gs-dev/app"
+	"github.com/guionardo/gs-dev/app/dev"
 	"github.com/guionardo/gs-dev/configs"
-	pathtools "github.com/guionardo/gs-dev/internal/path_tools"
-	"github.com/manifoldco/promptui"
+	"github.com/guionardo/gs-dev/internal/console"
 	"github.com/spf13/cobra"
 )
 
-func SetupInit(cmd *cobra.Command) {
-	cmd.Println(app.ToolName)
-	cfg := configs.ValidateConfiguration(cmd)
-	if cfg.ErrorCode == configs.ERROR_MISSING_CONF_PATH {
-		cmd.PrintErrf("%s", cfg.Error)
-		return
-	}
-	if !cfg.Prompt(){
-		return
-	}
-	if cfg.ErrorCode == configs.NO_ERROR {
-		cmd.Printf("%s Setup is ok on %s", promptui.IconGood, cfg.DataFolder)
-		return
-	}
-	if cfg.ErrorCode == configs.ERROR_CONF_PATH_NOT_FOUND {
-		cmd.Printf("+ Creating configuration path: %s\n", configs.ConfigurationPath)		
-		if err := pathtools.CreatePath(configs.ConfigurationPath); err != nil {
-			cmd.PrintErrf("  ! FAILED: %v\n", err)
-			return
-		}
-		if err := os.Chmod(configs.ConfigurationPath, os.ModeSticky|os.ModePerm); err != nil {
-			cmd.PrintErrf("  ! FAILED: %v\n", err)
-			return
-		}
-		cfg.ErrorCode = configs.ERROR_CONF_FILE_NOT_FOUND
-		cfg.ConfigFile = path.Join(cfg.DataFolder, fmt.Sprintf("%s.yaml", app.ToolName))
-	}
+func SetupInit(cmd *cobra.Command) error {
+	cfg, err := configs.GetConfiguration(cmd)
 
-	if cfg.ErrorCode == configs.ERROR_CONF_FILE_NOT_FOUND {
-		cmd.Printf("+ Creating configuration file: %s\n", cfg.ConfigFile)
-		promptCfg(&cfg, cmd)
-
-		if err := cfg.WriteFile(cfg.ConfigFile); err != nil {
-			cmd.PrintErrf("  ! FAILED: %v\n", err)
-			return
+	if err == nil {
+		if force, err := cmd.Flags().GetBool("force"); err != nil || !force {
+			console.OutputSuccess("Setup is OK - %s\n", cfg.DataFolder)
+			return nil
 		}
 	}
+	console.OutputInfo("Validating data folder: %s\n", cfg.DataFolder)
+	if err = cfg.ValidateDataFolder(); err != nil {
+		return err
+	}
+	console.OutputInfo("Validating configuration file: %s\n", cfg.ConfigFile)
+	if err = cfg.ValidateConfigFile(); err != nil {
+		return err
+	}
 
-	cmd.Println(promptui.IconGood + " Success")
+	home, _ := os.UserHomeDir()
+	devFolder := path.Join(home, "dev")
+
+	console.OutputInfo("Validating dev folders")
+
+	if stat, err := os.Stat(devFolder); err == nil {
+		if stat.IsDir() {
+			if index := cfg.DevConfig.FindDevPath(devFolder); index == -1 {
+				cfg.DevConfig.DevFolders = append(cfg.DevConfig.DevFolders, devFolder)
+				console.OutputNeutral("+ Added default: %s\n", devFolder)
+			}
+		}
+	}
+	maxSubLevels, err := configs.PromptInt("Maximum sub levels", 3, 1, 10)
+	if err != nil {
+		maxSubLevels = 3
+		// return err
+	}
+	cfg.DevConfig.MaxSubLevels = maxSubLevels
+
+	updateInterval, err := configs.PromptInt("Update interval (seconds)", 86400, 60, 604800)
+	if err != nil {
+		updateInterval = 86400
+	}
+	cfg.DevConfig.UpdateInterval = time.Duration(updateInterval * int(time.Second))
+	console.OutputNeutral("Update interval = %v\n", cfg.DevConfig.UpdateInterval)
+	changes, err := dev.UpdatePaths(cfg)
+	if err != nil {
+		console.OutputError("Failed to update paths: %v", err)
+	} else {
+		console.OutputSuccess("Changed paths: %d\n", changes)
+	}
+
+	if err := cfg.WriteFile(); err != nil {
+		console.OutputError("  ! FAILED: %v\n", err)
+		return err
+	}
+	console.OutputSuccess(" Success")
+
+	return nil
+
 }
 
 func promptCfg(cfg *configs.RootConfig, cmd *cobra.Command) {
-	if cfg.DevConfig.Prompt(){
+	if cfg.DevConfig.Prompt() {
 		return
 	}
-	validateFolder := func(folderName string) error {
-		if _, err := os.Stat(folderName); err != nil {
-			return errors.New("path not found")
-		}
-		return nil
-	}
-	prompt := promptui.Prompt{Label: "Configuration path",
-		Validate: validateFolder,
-		Default:  configs.DefaultConfigurationPath,
-	}
-	configurationPath, err := prompt.Run()
+
+	configurationPath, err := console.PromptFolder("Configuration path", configs.DefaultConfigurationPath)
+
 	if err != nil {
 		cmd.PrintErrln(err)
 	}

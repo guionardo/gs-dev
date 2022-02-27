@@ -9,14 +9,19 @@ import (
 
 	"github.com/guionardo/gs-dev/app"
 	"github.com/guionardo/gs-dev/configs"
+	"github.com/guionardo/gs-dev/internal/console"
 	"github.com/spf13/cobra"
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   app.ToolName,
-	Short: app.ShortDescription,
-	Long:  app.Description,
+	Use:     app.ToolName,
+	Short:   app.ShortDescription,
+	Long:    app.Description,
+	Version: app.Version,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		console.OutputNeutral("%s v%s\n", app.ToolName, app.Version)
+	},
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -24,8 +29,8 @@ var rootCmd = &cobra.Command{
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	err := rootCmd.Execute()
+func Execute() {	
+	err := rootCmd.ExecuteContext(configs.GetContextConfiguration())
 	if err != nil {
 		os.Exit(1)
 	}
@@ -36,9 +41,4 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 	configs.SetupConfigurationRoot(rootCmd)
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 }

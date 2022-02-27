@@ -1,23 +1,26 @@
 /*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
+Copyright © 2022 Guionardo Furlan <guionardo@gmail.com>
 
 */
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/guionardo/gs-dev/configs"
+	"github.com/guionardo/gs-dev/internal/console"
 	"github.com/spf13/cobra"
 )
 
 // setupCmd represents the setup command
 var setupCmd = &cobra.Command{
 	Use:   "setup",
-	Short: "Application configuration",	
+	Short: "Application configuration",
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := configs.ValidateConfiguration(cmd)
-		fmt.Printf("setup called %v", cfg)
+		if cfg.ErrorCode > 0 {
+			console.OutputError("Missing setup: %s", cfg.Error)
+		}
+		cmd.Help()
+
 	},
 }
 

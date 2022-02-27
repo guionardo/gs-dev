@@ -11,5 +11,20 @@ Install cobra [generator](https://github.com/spf13/cobra/blob/master/cobra/READM
 
 ## Features
 
+
+* [ ] dev
+  * [ ] dev go
+  * [ ] dev setup
+  * [ ] dev update
+* [ ] notify
+  * [ ] notify add
+  * [ ] notify browse
+* [ ] setup
+  * [ ] setup init
+* [X] version : Show application version
+
+### Console messages
+
+
 ### Source navigator
 
