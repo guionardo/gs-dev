@@ -11,7 +11,7 @@ import (
 
 var goCmd = &cobra.Command{
 	Use:   "go",
-	Short: "projects paths navigator",
+	Short: "Projects paths navigator",
 	Args:  cobra.MinimumNArgs(1),
 	Long:  `add words for search for path`,
 	Run: func(cmd *cobra.Command, args []string) {

@@ -5,6 +5,7 @@ Copyright © 2022 Guionardo Furlan <guionardo@gmail.com>
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/guionardo/gs-dev/app"
@@ -27,9 +28,24 @@ var rootCmd = &cobra.Command{
 	// Run: func(cmd *cobra.Command, args []string) { },
 }
 
+func NewRootCmd(in string) *cobra.Command {
+	return &cobra.Command{
+		Use:   app.ToolName,
+		Short: app.ShortDescription,
+		Long:  app.Description,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			console.OutputNeutral("%s v%s\n", app.ToolName, app.Version)
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Fprintf(cmd.OutOrStdout(), in)
+			return nil
+		},
+	}
+}
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {	
+func Execute() {
 	err := rootCmd.ExecuteContext(configs.GetContextConfiguration())
 	if err != nil {
 		os.Exit(1)

@@ -13,15 +13,16 @@ import (
 )
 
 type RootConfig struct {
-	DataFolder string    `yaml:"-"`
-	ConfigFile string    `yaml:"-"`
-	ErrorCode  int       `yaml:"-"`
-	Error      string    `yaml:"-"`
-	DevConfig  DevConfig `yaml:"dev_config"`
+	DataFolder string     `yaml:"-"`
+	ConfigFile string     `yaml:"-"`
+	ErrorCode  int        `yaml:"-"`
+	Error      string     `yaml:"-"`
+	DevConfig  *DevConfig `yaml:"dev_config"`
 }
 
 const (
 	GSDEV_CONFIGURATION_ENV   = "GSDEV_CONFIGURATION"
+	CONFIGURATION_FILE        = app.ToolName + ".yaml"
 	NO_ERROR                  = 0
 	ERROR_MISSING_CONF_PATH   = 1
 	ERROR_CONF_PATH_NOT_FOUND = 2
@@ -32,6 +33,49 @@ const (
 
 var DefaultConfigurationPath string
 var ConfigurationPath string
+
+func LoadConfiguration(dataFolder string) (config *RootConfig) {
+	stat, err := os.Stat(dataFolder)
+	config = &RootConfig{}
+	if err != nil {
+		config.SetErrorf(ERROR_CONF_PATH_NOT_FOUND, "data folder doesn't exists - %s", err)
+		return
+	}
+	if !stat.IsDir() {
+		config.SetErrorf(ERROR_CONF_PATH_NOT_FOUND, "data folder isn't a folder - %s", dataFolder)
+		return
+	}
+	configFile := path.Join(dataFolder, CONFIGURATION_FILE)
+
+	content, err := os.ReadFile(configFile)
+	if err != nil {
+		config.SetErrorf(ERROR_CONF_FILE_READ, "%v", err)
+		return
+	}
+	err = yaml.Unmarshal(content, &config)
+	if err == nil {
+		config.ConfigFile = configFile
+		config.DataFolder = dataFolder
+	} else {
+		config.SetErrorf(ERROR_CONF_FILE_INVALID, "%v", err)
+	}
+	return
+}
+
+func (config *RootConfig) SaveToFile(configFile string) error {
+	if len(configFile) == 0 {
+		return fmt.Errorf("empty config file name")
+	}
+	content, err := yaml.Marshal(config)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(configFile, content, 0644)
+}
+
+func (config *RootConfig) Save() error {
+	return config.SaveToFile(config.ConfigFile)
+}
 
 func init() {
 	homeDir, _ := os.UserHomeDir()
