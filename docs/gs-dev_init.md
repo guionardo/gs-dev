@@ -2,6 +2,12 @@
 
 Initialization for shell alias
 
+### Synopsis
+
+Add to your profile script (.bashrc, etc)
+
+source <(gs-dev init)
+
 ```
 gs-dev init [flags]
 ```

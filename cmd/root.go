@@ -46,10 +46,6 @@ func init() {
 	// will be global for your application.
 	configs.SetupConfigurationRoot(rootCmd)
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 	setup.SetRootCmd(rootCmd)
 }
 

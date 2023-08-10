@@ -12,7 +12,6 @@ the developer in your tasks.
 ```
       --config string   configuration path (ENV=GSDEV_CONFIGURATION) (default "/home/guionardo/.gs-dev")
   -h, --help            help for gs-dev
-  -t, --toggle          Help message for toggle
 ```
 
 ### SEE ALSO
