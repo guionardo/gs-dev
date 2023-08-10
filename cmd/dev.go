@@ -1,40 +1,102 @@
-/*
-Copyright © 2022 NAME HERE <EMAIL ADDRESS>
-
-*/
 package cmd
 
 import (
-	"fmt"
+	"errors"
+	"os"
+	"path"
 
+	"github.com/guionardo/gs-dev/app"
+	"github.com/guionardo/gs-dev/app/dev"
 	"github.com/spf13/cobra"
 )
 
 // devCmd represents the dev command
 var devCmd = &cobra.Command{
 	Use:   "dev",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("dev called")
-	},
+	Short: "Rapid access to your development folders",
+	Long: `This feature allows you to access your projects folder
+quickly and get information about it`,
+	RunE: devRun,
+	Args: cobra.MinimumNArgs(1),
 }
 
 func init() {
+	addCommand := &cobra.Command{
+		Use:   "add",
+		Short: "Add root folder",
+		Args:  cobra.ExactArgs(1),
+		RunE:  devRunAdd,
+	}
+	addCommand.Flags().Uint8P("max-sublevels", "m", 3, "Maximum sub level for folders")
+
+	removeComand := &cobra.Command{
+		Use:   "remove",
+		Short: "Remove root folder",
+		Args:  cobra.ExactArgs(1),
+		RunE:  devRunRemove,
+	}
+
+	syncCommand := &cobra.Command{
+		Use:   "sync",
+		Short: "Force synchronization of folders",
+		RunE:  devRunSync,
+	}
+
+	ignoreChildCommand := &cobra.Command{
+		Use:     "child",
+		Short:   "Enable/disable children",
+		Long:    "use arguments 'enable' or 'disable'",
+		Args:    cobra.ExactArgs(1),
+		RunE:    devRunChild,
+		Example: "dev child --enable /home/some/folder",
+	}
+	ignoreChildCommand.Flags().BoolP("enable", "e", false, "Enable children")
+	ignoreChildCommand.Flags().BoolP("disable", "d", false, "Disable children")
+	ignoreChildCommand.MarkFlagsMutuallyExclusive("enable", "disable")
+
+	devCmd.AddCommand(
+		addCommand,
+		removeComand,
+		syncCommand,
+		ignoreChildCommand,
+	)
+
+	output := path.Join(os.TempDir(), app.ToolName)
+	devCmd.Flags().StringP("output", "o", output, "Output script for shell alias")
 	rootCmd.AddCommand(devCmd)
+	dev.SetInteractiveCommand(devCmd, dev.DevInteractive)
+}
 
-	// Here you will define your flags and configuration settings.
+func devRun(cmd *cobra.Command, args []string) error {
+	output, _ := cmd.Flags().GetString("output")
+	return dev.RunGo(args, output)
+}
 
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// devCmd.PersistentFlags().String("foo", "", "A help for foo")
+func devRunAdd(cmd *cobra.Command, args []string) error {
+	msl, _ := cmd.Flags().GetUint8("max-sublevels")
+	return dev.RunAddFolder(args[0], msl)
+}
 
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// devCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+func devRunRemove(cmd *cobra.Command, args []string) error {
+	return dev.RunRemoveFolder(args[0])
+}
+
+func devRunSync(cmd *cobra.Command, args []string) error {
+	return dev.RunSync()
+}
+
+func devRunChild(cmd *cobra.Command, args []string) error {
+	enable, _ := cmd.Flags().GetBool("enable")
+	disable, _ := cmd.Flags().GetBool("disable")
+	if !(enable || disable) {
+		return errors.New("you must inform --enable or --disable")
+	}
+
+	folder, _ := os.Getwd()
+
+	if len(args) > 0 {
+		folder = args[0]
+	}
+	return dev.RunIgnoreChildren(folder, disable)
+
 }

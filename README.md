@@ -1,4 +1,5 @@
 # gs-dev
+
 Development assistant
 
 [![CodeQL](https://github.com/guionardo/gs-dev/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/guionardo/gs-dev/actions/workflows/codeql-analysis.yml)
@@ -11,5 +12,4 @@ Install cobra [generator](https://github.com/spf13/cobra/blob/master/cobra/READM
 
 ## Features
 
-### Source navigator
-
+Check the [documentation](docs/gs-dev.md)
