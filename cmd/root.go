@@ -1,6 +1,5 @@
 /*
-Copyright © 2022 Guionardo Furlan <guionardo@gmail.com>
-
+Copyright © 2023 Guionardo Furlan <guionardo@gmail.com>
 */
 package cmd
 
@@ -8,15 +7,21 @@ import (
 	"os"
 
 	"github.com/guionardo/gs-dev/app"
+	"github.com/guionardo/gs-dev/app/setup"
+	"github.com/guionardo/gs-dev/config"
 	"github.com/guionardo/gs-dev/configs"
 	"github.com/spf13/cobra"
 )
 
+//go:generate go run ../gen/docs.go
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   app.ToolName,
-	Short: app.ShortDescription,
-	Long:  app.Description,
+	Use:               app.ToolName,
+	Short:             app.ShortDescription,
+	Long:              app.Description,
+	PersistentPreRunE: rootPreRun,
+
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	// Run: func(cmd *cobra.Command, args []string) { },
@@ -31,6 +36,10 @@ func Execute() {
 	}
 }
 
+func GetRootCmd() *cobra.Command {
+	return rootCmd
+}
+
 func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
@@ -41,4 +50,16 @@ func init() {
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
+	setup.SetRootCmd(rootCmd)
+}
+
+func rootPreRun(cmd *cobra.Command, args []string) error {
+	// Check if config root is ok
+	if repositoryFolder, err := cmd.Flags().GetString("config"); err == nil {
+		if err = config.ValidateRepositoryFolder(repositoryFolder); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

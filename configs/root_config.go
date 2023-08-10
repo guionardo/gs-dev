@@ -7,26 +7,15 @@ import (
 
 	"github.com/guionardo/gs-dev/app"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type RootConfig struct {
-	DataFolder string    `yaml:"-"`
-	ConfigFile string    `yaml:"-"`
-	ErrorCode  int       `yaml:"-"`
-	Error      string    `yaml:"-"`
-	DevConfig  DevConfig `yaml:"dev_config"`
+	DataFolder string `yaml:"-"`
+	ConfigFile string `yaml:"-"`
+	ErrorCode  int    `yaml:"-"`
+	Error      string `yaml:"-"`
 }
-
-const (
-	GSDEV_CONFIGURATION_ENV   = "GSDEV_CONFIGURATION"
-	NO_ERROR                  = 0
-	ERROR_MISSING_CONF_PATH   = 1
-	ERROR_CONF_PATH_NOT_FOUND = 2
-	ERROR_CONF_FILE_NOT_FOUND = 3
-	ERROR_CONF_FILE_READ      = 4
-	ERROR_CONF_FILE_INVALID   = 5
-)
 
 var DefaultConfigurationPath string
 var ConfigurationPath string
@@ -42,7 +31,7 @@ func init() {
 }
 
 func SetupConfigurationRoot(rootCommand *cobra.Command) {
-	rootCommand.PersistentFlags().StringVarP(&ConfigurationPath, "config", "c",
+	rootCommand.PersistentFlags().StringVar(&ConfigurationPath, "config",
 		DefaultConfigurationPath, fmt.Sprintf("configuration path (ENV=%s)", GSDEV_CONFIGURATION_ENV))
 }
 
