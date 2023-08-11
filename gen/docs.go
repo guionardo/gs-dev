@@ -22,7 +22,7 @@ func main() {
 		log.Fatalf("Failed to remove folder %s - %v", docsFolder, err)
 	}
 	if err = pathtools.CreatePath(docsFolder); err != nil {
-		log.Fatal("Failed to create folder %s - %v", docsFolder, err)
+		log.Fatalf("Failed to create folder %s - %v", docsFolder, err)
 	}
 	if err = doc.GenMarkdownTree(rootCmd, "../docs"); err != nil {
 		log.Fatalf("Failed to generate documentation in %s - %v", docsFolder, err)

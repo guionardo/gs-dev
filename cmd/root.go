@@ -12,7 +12,6 @@ import (
 	"github.com/guionardo/gs-dev/config"
 	"github.com/guionardo/gs-dev/configs"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
 //go:generate go run ../gen/docs.go
@@ -34,7 +33,8 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	cmd, _, err := rootCmd.Find(os.Args[1:])
 	// default cmd if no cmd is given
-	if err == nil && cmd.Use == rootCmd.Use && cmd.Flags().Parse(os.Args[1:]) != pflag.ErrHelp {
+	if err != nil && cmd.Use == rootCmd.Use {
+		// && cmd.Flags().Parse(os.Args[1:]) != pflag.ErrHelp
 		args := append([]string{devCmd.Use}, os.Args[1:]...)
 		rootCmd.SetArgs(args)
 	}
