@@ -18,9 +18,9 @@ the developer in your tasks.
 
 * [gs-dev dev](gs-dev_dev.md)	 - Rapid access to your development folders
 * [gs-dev init](gs-dev_init.md)	 - Initialization for shell alias
+* [gs-dev install](gs-dev_install.md)	 - Install bindings on your shell profile
 * [gs-dev setup](gs-dev_setup.md)	 - Application configuration
 * [gs-dev todo](gs-dev_todo.md)	 - To-do list
-* [gs-dev update](gs-dev_update.md)	 - A brief description of your command
 * [gs-dev url](gs-dev_url.md)	 - Open the git repository on browser
 * [gs-dev version](gs-dev_version.md)	 - Application version
 
