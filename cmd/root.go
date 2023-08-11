@@ -4,6 +4,7 @@ Copyright © 2023 Guionardo Furlan <guionardo@gmail.com>
 package cmd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/guionardo/gs-dev/app"
@@ -11,6 +12,7 @@ import (
 	"github.com/guionardo/gs-dev/config"
 	"github.com/guionardo/gs-dev/configs"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 //go:generate go run ../gen/docs.go
@@ -30,10 +32,21 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	err := rootCmd.Execute()
-	if err != nil {
+	cmd, _, err := rootCmd.Find(os.Args[1:])
+	// default cmd if no cmd is given
+	if err == nil && cmd.Use == rootCmd.Use && cmd.Flags().Parse(os.Args[1:]) != pflag.ErrHelp {
+		args := append([]string{devCmd.Use}, os.Args[1:]...)
+		rootCmd.SetArgs(args)
+	}
+
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
+	// err := rootCmd.Execute()
+	// if err != nil {
+	// 	os.Exit(1)
+	// }
 }
 
 func GetRootCmd() *cobra.Command {

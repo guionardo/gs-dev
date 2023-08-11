@@ -14,29 +14,12 @@ func RunGo(args []string, output string) error {
 	if subFolders := findArgs(args); len(subFolders) == 0 {
 		return fmt.Errorf("there is no folder for args %v", args)
 	} else {
-		var questions = []*survey.Question{
-			{
-				Name: "folder",
-				Prompt: &survey.Select{
-					Message: "Choose a folder:",
-					Options: subFolders,
-				},
-			}}
-
-		answers := struct {
-			Folder string `survey:"folder"`
-		}{}
-
-		if err := survey.Ask(questions, &answers); err != nil {
-			return err
+		folder, err := chooseFolder(subFolders)
+		if err == nil {
+			err = os.WriteFile(output, []byte("cd "+folder), 0666)
 		}
-
-		if len(answers.Folder) == 0 {
-			return errors.New("folder is required")
-		}
-		os.WriteFile(output, []byte("cd "+answers.Folder), 0666)
+		return err
 	}
-	return nil
 }
 
 func findArgs(args []string) (folders []string) {
@@ -49,4 +32,35 @@ func findArgs(args []string) (folders []string) {
 
 	}
 	return internal.List(foundFolders)
+}
+
+func chooseFolder(subFolders []string) (folder string, err error) {
+	if len(subFolders) == 1 {
+		folder = subFolders[0]
+		return
+	}
+
+	var questions = []*survey.Question{
+		{
+			Name: "folder",
+			Prompt: &survey.Select{
+				Message: "Choose a folder:",
+				Options: subFolders,
+			},
+		}}
+
+	answers := struct {
+		Folder string `survey:"folder"`
+	}{}
+
+	if err = survey.Ask(questions, &answers); err == nil {
+		if len(answers.Folder) == 0 {
+			err = errors.New("folder is required")
+		} else {
+			folder = answers.Folder
+		}
+
+	}
+
+	return
 }
