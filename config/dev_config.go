@@ -10,9 +10,10 @@ import (
 //go:generate go run ../gen/configs.go
 
 type DevConfig struct {
-	fileName string
-	Folders  map[string]*internal.PathList `yaml:"folders"`
-	LastSync time.Time                     `yaml:"last_sync"`
+	fileName        string
+	Folders         map[string]*internal.PathList `yaml:"folders"`
+	LastSync        time.Time                     `yaml:"last_sync"`
+	MaxSyncInterval time.Duration                 `yaml:"max_sync_interval"`
 }
 
 func (dc *DevConfig) GetPath(path string) *internal.Path {
@@ -40,7 +41,12 @@ type DevSubFolder struct {
 
 func NewDevConfig(root string) (cfg *DevConfig) {
 	return &DevConfig{
-		fileName: path.Join(root, "dev.yaml"),
-		Folders:  make(map[string]*internal.PathList),
+		fileName:        path.Join(root, "dev.yaml"),
+		Folders:         make(map[string]*internal.PathList),
+		MaxSyncInterval: time.Hour,
 	}
+}
+
+func (cfg *DevConfig) ShoudResync() bool {
+	return cfg.LastSync.Before(time.Now().Add(-cfg.MaxSyncInterval))
 }

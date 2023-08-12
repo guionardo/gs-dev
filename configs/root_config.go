@@ -1,3 +1,4 @@
+// TODO: Verificar se root_config.go é necessário
 package configs
 
 import (

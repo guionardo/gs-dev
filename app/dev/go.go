@@ -25,6 +25,9 @@ func RunGo(args []string, output string) error {
 func findArgs(args []string) (folders []string) {
 	foundFolders := make(map[string]struct{})
 	devConfig := getConfig()
+	if devConfig.ShoudResync() {
+		_ = RunSync(devConfig)
+	}
 	for _, folder := range devConfig.Folders {
 		for _, path := range folder.FindByPattern(args) {
 			foundFolders[path.Name] = struct{}{}
