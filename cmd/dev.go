@@ -4,10 +4,18 @@ import (
 	"errors"
 	"os"
 	"path"
+	"time"
 
 	"github.com/guionardo/gs-dev/app"
 	"github.com/guionardo/gs-dev/app/dev"
 	"github.com/spf13/cobra"
+)
+
+const (
+	maxSubLevels    = "max-sub-levels"
+	Enable          = "enable"
+	Disable         = "disable"
+	MaxSyncInterval = "max-sync-interval"
 )
 
 // devCmd represents the dev command
@@ -27,7 +35,7 @@ func init() {
 		Args:  cobra.ExactArgs(1),
 		RunE:  devRunAdd,
 	}
-	addCommand.Flags().Uint8P("max-sublevels", "m", 3, "Maximum sub level for folders")
+	addCommand.Flags().Uint8P(maxSubLevels, "m", 3, "Maximum sub level for folders")
 
 	removeComand := &cobra.Command{
 		Use:   "remove",
@@ -41,6 +49,7 @@ func init() {
 		Short: "Force synchronization of folders",
 		RunE:  devRunSync,
 	}
+	syncCommand.Flags().Int16P(MaxSyncInterval, "m", 60, "Max synchronization interval in minutes")
 
 	ignoreChildCommand := &cobra.Command{
 		Use:     "child",
@@ -50,9 +59,9 @@ func init() {
 		RunE:    devRunChild,
 		Example: "dev child --enable /home/some/folder",
 	}
-	ignoreChildCommand.Flags().BoolP("enable", "e", false, "Enable children")
-	ignoreChildCommand.Flags().BoolP("disable", "d", false, "Disable children")
-	ignoreChildCommand.MarkFlagsMutuallyExclusive("enable", "disable")
+	ignoreChildCommand.Flags().BoolP(Enable, "e", false, "Enable children")
+	ignoreChildCommand.Flags().BoolP(Disable, "d", false, "Disable children")
+	ignoreChildCommand.MarkFlagsMutuallyExclusive(Enable, Disable)
 
 	devCmd.AddCommand(
 		addCommand,
@@ -73,7 +82,7 @@ func devRun(cmd *cobra.Command, args []string) error {
 }
 
 func devRunAdd(cmd *cobra.Command, args []string) error {
-	msl, _ := cmd.Flags().GetUint8("max-sublevels")
+	msl, _ := cmd.Flags().GetUint8(maxSubLevels)
 	return dev.RunAddFolder(args[0], msl)
 }
 
@@ -82,12 +91,13 @@ func devRunRemove(cmd *cobra.Command, args []string) error {
 }
 
 func devRunSync(cmd *cobra.Command, args []string) error {
-	return dev.RunSync()
+	maxSyncInterval, _ := cmd.Flags().GetInt16(MaxSyncInterval)
+	return dev.RunSync(time.Minute * time.Duration(maxSyncInterval))
 }
 
 func devRunChild(cmd *cobra.Command, args []string) error {
-	enable, _ := cmd.Flags().GetBool("enable")
-	disable, _ := cmd.Flags().GetBool("disable")
+	enable, _ := cmd.Flags().GetBool(Enable)
+	disable, _ := cmd.Flags().GetBool(Disable)
 	if !(enable || disable) {
 		return errors.New("you must inform --enable or --disable")
 	}

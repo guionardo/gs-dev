@@ -2,6 +2,7 @@ package dev
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/guionardo/gs-dev/internal"
 	"github.com/guionardo/gs-dev/internal/logger"
@@ -35,7 +36,7 @@ func RunIgnoreChildren(folderName string, ignoreChildren bool) error {
 	if err := devConfig.Save(); err != nil {
 		return err
 	}
-	if err := RunSync(); err == nil {
+	if err := RunSync(time.Duration(0)); err == nil {
 		logger.Info("%s children of %s", log, folderName)
 		return nil
 	} else {

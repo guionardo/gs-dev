@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/guionardo/gs-dev/internal"
@@ -26,7 +27,7 @@ func findArgs(args []string) (folders []string) {
 	foundFolders := make(map[string]struct{})
 	devConfig := getConfig()
 	if devConfig.ShoudResync() {
-		_ = RunSync(devConfig)
+		_ = RunSync(time.Duration(0))
 	}
 	for _, folder := range devConfig.Folders {
 		for _, path := range folder.FindByPattern(args) {

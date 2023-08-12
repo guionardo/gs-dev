@@ -2,8 +2,13 @@ package dev
 
 import "github.com/guionardo/gs-dev/config"
 
+var readenConfig *config.DevConfig
+
 func getConfig() *config.DevConfig {
-	devConfig := config.NewDevConfig(config.GetConfigRepositoryFolder())
-	_ = devConfig.Load()
-	return devConfig
+	if readenConfig == nil {
+		readenConfig = config.NewDevConfig(config.GetConfigRepositoryFolder())
+		_ = readenConfig.Load()
+	}
+
+	return readenConfig
 }
