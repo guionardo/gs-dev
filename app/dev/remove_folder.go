@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/guionardo/gs-dev/internal/logger"
 	pathtools "github.com/guionardo/gs-dev/internal/path_tools"
 )
 
@@ -23,7 +24,7 @@ func RunRemoveFolder(folder string) error {
 	}
 	for _, f := range toRemove {
 		delete(devConfig.Folders, f)
-		fmt.Printf("Removed %s\n", f)
+		logger.Warn("Removed %s", f)
 	}
 
 	if err := devConfig.Save(); err != nil {

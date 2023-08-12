@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/guionardo/go-dev/pkg/logger"
+	"github.com/guionardo/gs-dev/internal/logger"
 	"github.com/mattn/go-isatty"
 	"github.com/schollz/progressbar/v3"
 )

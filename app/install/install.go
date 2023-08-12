@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/guionardo/gs-dev/internal/logger"
 	"github.com/guionardo/gs-dev/shell"
 )
 
@@ -76,7 +77,7 @@ func RunInstall() error {
 	if err := os.WriteFile(profile, []byte(strings.Join(profileLines, "\n")), 0644); err != nil {
 		return err
 	}
-	fmt.Printf("binding installed at file %s\n", profile)
+	logger.Info("binding installed at file %s\n", profile)
 	return nil
 
 }
@@ -101,6 +102,6 @@ func RunUninstall() error {
 	if err := os.WriteFile(profile, []byte(strings.Join(profileLines, "\n")), 0644); err != nil {
 		return err
 	}
-	fmt.Printf("binding uninstalled at file %s\n", profile)
+	logger.Warn("binding uninstalled at file %s\n", profile)
 	return nil
 }

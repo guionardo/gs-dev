@@ -5,6 +5,7 @@ import (
 
 	"github.com/guionardo/gs-dev/config"
 	"github.com/guionardo/gs-dev/internal"
+	"github.com/guionardo/gs-dev/internal/logger"
 	pathtools "github.com/guionardo/gs-dev/internal/path_tools"
 )
 
@@ -28,7 +29,7 @@ func RunAddFolder(folder string, max_sublevels uint8) error {
 	if err := devConfig.Save(); err != nil {
 		return err
 	}
-	fmt.Printf("Folder added %s\n", folder)
+	logger.Info("Folder added %s\n", folder)
 	return nil
 }
 

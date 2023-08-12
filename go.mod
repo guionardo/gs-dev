@@ -4,7 +4,6 @@ go 1.21
 
 require (
 	github.com/AlecAivazis/survey/v2 v2.3.7
-	github.com/guionardo/go-dev v1.9.1
 	github.com/manifoldco/promptui v0.9.0
 	github.com/mattn/go-isatty v0.0.19
 	github.com/schollz/progressbar/v3 v3.13.1

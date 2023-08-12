@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/guionardo/go-dev/pkg/logger"
+	"github.com/guionardo/gs-dev/internal/logger"
 	pathtools "github.com/guionardo/gs-dev/internal/path_tools"
 )
 

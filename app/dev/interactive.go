@@ -2,10 +2,10 @@ package dev
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/guionardo/gs-dev/configs"
+	"github.com/guionardo/gs-dev/internal/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -47,7 +47,7 @@ func DevInteractive(cmd *cobra.Command) error {
 			err = function(cmd)
 		}
 	}
-	fmt.Println("DEV")
+	logger.Debug("DEV")
 
 	return err
 }
