@@ -22,7 +22,7 @@ func ReadFolders(root string, maxSubLevel int) (subFolders []string, err error) 
 	}
 	defer func() {
 		if bar != nil {
-			bar.Finish()
+			_ = bar.Finish()
 		}
 		logger.Info("%s took %v to get %d folders", noIntLog, time.Since(startTime).String(), len(subFolders))
 	}()
@@ -30,7 +30,7 @@ func ReadFolders(root string, maxSubLevel int) (subFolders []string, err error) 
 	subFolders, err = FolderReaderReadDir(root, maxSubLevel,
 		func(name string) bool {
 			if intTerm {
-				bar.Add(1)
+				_ = bar.Add(1)
 			}
 			return !strings.HasPrefix(name, ".") && !strings.HasPrefix(name, "_")
 		},

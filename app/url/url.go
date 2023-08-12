@@ -2,9 +2,8 @@ package url
 
 import (
 	"fmt"
-	"os"
+	"net/http"
 	"os/exec"
-	"runtime"
 
 	"github.com/guionardo/gs-dev/internal/git"
 )
@@ -20,21 +19,22 @@ func RunUrl(pathName string, justShow bool) (err error) {
 	return
 }
 
-func openInBrowser(url string) (err error) {
-	switch runtime.GOOS {
-	case "linux":
-		command := "xdg-open"
-		if len(os.Getenv("WSL_DISTRO_NAME")) > 0 {
-			command = "sensible-browser"
-		}
-		err = exec.Command(command, url).Start()
-	case "windows":
-		err = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
-	case "darwin":
-		err = exec.Command("open", url).Start()
-	default:
-		err = fmt.Errorf("unsupported platform")
+func checkReachableUrl(url string) error {
+	if resp, err := http.Head(url); err != nil {
+		return err
+	} else if resp.StatusCode >= 100 {
+		return nil
+	} else {
+		return fmt.Errorf("got %s status from %s", resp.Status, url)
 	}
+}
+
+func openInBrowser(url string) (err error) {
+	if err = checkReachableUrl(url); err != nil {
+		return
+	}
+	command, args := urlCommand(url)
+	err = exec.Command(command, args...).Start()
 
 	return
 }

@@ -49,5 +49,5 @@ func DevInteractive(cmd *cobra.Command) error {
 	}
 	fmt.Println("DEV")
 
-	return nil
+	return err
 }

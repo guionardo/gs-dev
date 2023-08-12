@@ -8,7 +8,8 @@ Development assistant
 
 ## Development setup
 
-Install cobra [generator](https://github.com/spf13/cobra/blob/master/cobra/README.md)
+* Install cobra [generator](https://github.com/spf13/cobra/blob/master/cobra/README.md)
+* Setup pre-commit
 
 ## Features
 

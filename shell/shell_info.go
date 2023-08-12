@@ -11,7 +11,7 @@ type ShellInfo struct {
 	Name   string
 	RCFile string
 
-	homePath string
+	// homePath string
 }
 
 func NewShellInfo() (si *ShellInfo, err error) {

@@ -15,7 +15,7 @@ func TestDevConfig_Save_And_Load(t *testing.T) {
 		tmp := t.TempDir()
 		configs.SetupConfigurationRoot(cmd)
 		cmd.SetArgs([]string{"--config", tmp})
-		cmd.Execute()
+		_ = cmd.Execute()
 
 		cf := configs.NewConfigFolder(cmd)
 
