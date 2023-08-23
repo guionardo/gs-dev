@@ -11,6 +11,7 @@ import (
 	"github.com/guionardo/gs-dev/app/setup"
 	"github.com/guionardo/gs-dev/config"
 	"github.com/guionardo/gs-dev/configs"
+	"github.com/guionardo/gs-dev/internal/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -68,6 +69,12 @@ func rootPreRun(cmd *cobra.Command, args []string) error {
 		if err = config.ValidateRepositoryFolder(repositoryFolder); err != nil {
 			return err
 		}
+	}
+
+	// Debug
+	if debug, err := cmd.Flags().GetBool("debug"); err == nil {
+		logger.SetDebugMode(debug)
+		logger.Debug("DEBUG MODE ON")
 	}
 
 	return nil

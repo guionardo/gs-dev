@@ -13,7 +13,7 @@ func init() {
 
 source <(gs-dev init)`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return initshell.InitAction()
+			return initshell.RunInit()
 		},
 	}
 

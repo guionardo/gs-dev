@@ -6,6 +6,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/guionardo/gs-dev/app/todo"
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +21,13 @@ var todoCmd = &cobra.Command{
 }
 
 func init() {
+	addCmd := &cobra.Command{
+		Use:  "add",
+		RunE: todo.RunAddTodo,
+	}
+	todoCmd.AddCommand(
+		addCmd,
+	)
 	rootCmd.AddCommand(todoCmd)
 
 	// Here you will define your flags and configuration settings.

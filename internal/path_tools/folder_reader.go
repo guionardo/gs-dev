@@ -15,16 +15,16 @@ func ReadFolders(root string, maxSubLevel int) (subFolders []string, err error) 
 	intTerm := IsRunningFromInteractiveTerminal() && !logger.IsDebugMode()
 	var bar *progressbar.ProgressBar
 	logger.Info("Reading folders from %s (depth=%d)", root, maxSubLevel)
-	noIntLog := "Reading"
 	startTime := time.Now()
 	if intTerm {
-		bar = progressbar.Default(-1, noIntLog)
+		bar = progressbar.Default(-1, "Reading")
 	}
 	defer func() {
 		if bar != nil {
 			_ = bar.Finish()
 		}
-		logger.Info("%s took %v to get %d folders", noIntLog, time.Since(startTime).String(), len(subFolders))
+		logger.Info("I took %v to get %d folders from %s",
+			time.Since(startTime).String(), len(subFolders), root)
 	}()
 
 	subFolders, err = FolderReaderReadDir(root, maxSubLevel,
@@ -43,10 +43,10 @@ func ReadFolders(root string, maxSubLevel int) (subFolders []string, err error) 
 }
 
 func FolderReaderReadDir(root string, maxDepth int, acceptFolder func(string) bool, notify func(string)) ([]string, error) {
-	return readDirs_(root, 1, maxDepth, acceptFolder, notify)
+	return readDirs(root, 1, maxDepth, acceptFolder, notify)
 }
 
-func readDirs_(root string, level int, maxDepth int, acceptFolder func(string) bool, notify func(string)) ([]string, error) {
+func readDirs(root string, level int, maxDepth int, acceptFolder func(string) bool, notify func(string)) ([]string, error) {
 	dirs := make([]string, 0, 1000)
 	entries, err := os.ReadDir(root)
 	for _, entry := range entries {
@@ -55,7 +55,7 @@ func readDirs_(root string, level int, maxDepth int, acceptFolder func(string) b
 			notify(dir)
 			dirs = append(dirs, dir)
 			if level < maxDepth {
-				subDirs, err := readDirs_(dir, level+1, maxDepth, acceptFolder, notify)
+				subDirs, err := readDirs(dir, level+1, maxDepth, acceptFolder, notify)
 				if err == nil && len(subDirs) > 0 {
 					dirs = append(dirs, subDirs...)
 				}

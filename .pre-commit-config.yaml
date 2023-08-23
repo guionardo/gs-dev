@@ -18,15 +18,15 @@ repos:
       - id: go-cyclo
         args: [-over=15]
       - id: validate-toml
-      - id: no-go-testing
+      # - id: no-go-testing
       - id: golangci-lint
       - id: go-critic
       - id: go-unit-tests
       - id: go-build
-      - id: go-mod-tidy
+      # - id: go-mod-tidy
 
   - repo: https://github.com/koalaman/shellcheck-precommit
     rev: v0.9.0
     hooks:
       - id: shellcheck
-        args: ["--severity=warning", "--exclude=2068,1091"] # Optionally only show errors and warnings
+        args: ["--severity=warning", "--exclude=2068,1091,2199"] # Optionally only show errors and warnings

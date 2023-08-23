@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/guionardo/gs-dev/internal"
+	"github.com/guionardo/gs-dev/internal/logger"
 )
 
 //go:generate go run ../gen/configs.go
@@ -40,6 +41,7 @@ type DevSubFolder struct {
 }
 
 func NewDevConfig(root string) (cfg *DevConfig) {
+	logger.Debug("DevConfig [%s]", root)
 	return &DevConfig{
 		fileName:        path.Join(root, "dev.yaml"),
 		Folders:         make(map[string]*internal.PathList),

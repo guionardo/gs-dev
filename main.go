@@ -1,6 +1,5 @@
 /*
-Copyright © 2022 Guionardo Furlan <guionardo@gmail.com>
-
+Copyright © 2023 Guionardo Furlan <guionardo@gmail.com>
 */
 package main
 

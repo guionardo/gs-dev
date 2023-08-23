@@ -34,6 +34,7 @@ func init() {
 func SetupConfigurationRoot(rootCommand *cobra.Command) {
 	rootCommand.PersistentFlags().StringVar(&ConfigurationPath, "config",
 		DefaultConfigurationPath, fmt.Sprintf("configuration path (ENV=%s)", GSDEV_CONFIGURATION_ENV))
+	rootCommand.PersistentFlags().Bool("debug", false, "Debug logging")
 }
 
 func (cfg *RootConfig) SetErrorf(errorCode int, format string, a ...interface{}) {

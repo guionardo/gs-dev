@@ -8,8 +8,8 @@ import (
 var debugMode = false
 
 const (
-	errorLabel = "[ERROR] "
 	infoLabel  = ""
+	errorLabel = "[ERROR] "
 	debugLabel = "[DEBUG] "
 	fatalLabel = "[FATAL] "
 	warnLabel  = "[WARNING] "
@@ -36,6 +36,7 @@ func Debug(format string, args ...interface{}) {
 func Warn(format string, args ...interface{}) {
 	log(warnLabel, format, Yellow, args...)
 }
+
 func Info(format string, args ...interface{}) {
 	log(infoLabel, format, Green, args...)
 }

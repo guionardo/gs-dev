@@ -16,7 +16,7 @@ func RunSync(maxSyncInterval time.Duration) error {
 		}
 	}
 	devConfig.LastSync = time.Now()
-	if maxSyncInterval.Minutes() > 0 {
+	if maxSyncInterval.Minutes() > 0 && maxSyncInterval != devConfig.MaxSyncInterval {
 		devConfig.MaxSyncInterval = maxSyncInterval
 		logger.Info("Updated max synchronization interval to %v", maxSyncInterval)
 	}
