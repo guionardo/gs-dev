@@ -23,7 +23,7 @@ _run_gs_dev() {
 _gsdev_treat_output() {
   if [[ ! -f "GS_OUTPUT" ]]; then
     echo "No output file found: GS_OUTPUT"
-    exit 1
+    return
   fi
   source "GS_OUTPUT"
   rm "GS_OUTPUT"
