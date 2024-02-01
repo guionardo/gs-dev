@@ -9,7 +9,10 @@ import (
 func TestGetRemoteHttpURL(t *testing.T) {
 	thisFolderWithRepo, _ := os.Getwd()
 	thisFolderWithRepo = path.Join(thisFolderWithRepo, "..", "..")
+	t.Logf("thisFolderWithRepo: %s", thisFolderWithRepo)
 	anotherFolderWithoutRepo := t.TempDir()
+	t.Logf("anotherFolderWithoutRepo: %s", anotherFolderWithoutRepo)
+
 	tests := []struct {
 		name    string
 		folder  string
