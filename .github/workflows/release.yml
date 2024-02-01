@@ -14,7 +14,9 @@ jobs:
       - name: Read report data
         run: curl -s 'https://goreportcard.com/report/github.com/guionardo/gs-dev' | grep "var response = " | awk -F' ' '{for (i=4; i<NF; i++) printf("%s ", $i)}' > report.json
       - name: Parse JSON
-        run: "cat report.json | jq '{grade: .grade, average: .average, last_refresh: .last_refresh, did_error: .did_error}'"
+        run: |
+          echo "::notice Grade $(cat report.json | jq .grade)"
+          "cat report.json | jq '{grade: .grade, average: .average, last_refresh: .last_refresh, did_error: .did_error}'"
 
   releases-matrix:
     name: Release Go Binary
