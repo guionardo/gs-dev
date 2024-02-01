@@ -3,6 +3,7 @@ package git
 import (
 	"os"
 	"path"
+	"strings"
 	"testing"
 )
 
@@ -13,6 +14,13 @@ func TestGetRemoteHttpURL(t *testing.T) {
 	anotherFolderWithoutRepo := t.TempDir()
 	t.Logf("anotherFolderWithoutRepo: %s", anotherFolderWithoutRepo)
 
+	for _, env := range os.Environ() {
+		if strings.HasPrefix(env, "GITHUB") {
+			t.Logf("Skipping in github action job")
+			return
+		}
+	}
+
 	tests := []struct {
 		name    string
 		folder  string
@@ -22,8 +30,10 @@ func TestGetRemoteHttpURL(t *testing.T) {
 		{"Repo GIT", thisFolderWithRepo, "https://github.com/guionardo/gs-dev", false},
 		{"Repo not GIT", anotherFolderWithoutRepo, "", true},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
 			got, err := GetRemoteHttpURL(tt.folder)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetRemoteHttpURL() error = %v, wantErr %v", err, tt.wantErr)
