@@ -7,18 +7,23 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func (cfg *TodoConfig) Save() error {
-	if content, err := yaml.Marshal(cfg); err != nil {
-		return err
-	} else {
-		return os.WriteFile(cfg.fileName, content, 0644)
+func (cfg *TodoConfig) Save() (err error) {
+	cfg.lock.Lock()
+	defer cfg.lock.Unlock()
+	var content []byte
+	if content, err = yaml.Marshal(cfg); err == nil {
+		err = os.WriteFile(cfg.fileName, content, 0644)
 	}
+	return
 }
 
-func (cfg *TodoConfig) Load() error {
-	if content, err := os.ReadFile(cfg.fileName); err != nil {
-		return err
-	} else {
-		return yaml.Unmarshal(content, cfg)
+func (cfg *TodoConfig) Load() (err error) {
+	cfg.lock.Lock()
+	defer cfg.lock.Unlock()
+	var content []byte
+	if content, err = readFileWithLog(cfg.fileName); err == nil {
+		err = yaml.Unmarshal(content, cfg)
 	}
+	return
+
 }

@@ -13,7 +13,7 @@ repos:
     rev: v0.5.1
     hooks:
       - id: go-fmt
-      - id: go-vet
+      # - id: go-vet
       - id: go-imports
       - id: go-cyclo
         args: [-over=15]

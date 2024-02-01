@@ -16,25 +16,30 @@ var templ = `// CODE GENERATED. DO NOT EDIT.
 package config
 
 import (
-	"os"	
+	"os"
 
 	"gopkg.in/yaml.v3"
 )
 
-func (cfg *{{STRUCT}}) Save() error {
-	if content, err := yaml.Marshal(cfg); err != nil {
-		return err
-	} else {
-		return os.WriteFile(cfg.fileName, content, 0644)
+func (cfg *{{STRUCT}}) Save() (err error) {
+	cfg.lock.Lock()
+	defer cfg.lock.Unlock()
+	var content []byte
+	if content, err = yaml.Marshal(cfg); err == nil {
+		err = os.WriteFile(cfg.fileName, content, 0644)
 	}
+	return
 }
 
-func (cfg *{{STRUCT}}) Load() error {
-	if content, err := os.ReadFile(cfg.fileName); err != nil {
-		return err
-	} else {
-		return yaml.Unmarshal(content, cfg)
+func (cfg *{{STRUCT}}) Load() (err error) {
+	cfg.lock.Lock()
+	defer cfg.lock.Unlock()
+	var content []byte
+	if content, err = readFileWithLog(cfg.fileName); err == nil {
+		err = yaml.Unmarshal(content, cfg)
 	}
+	return
+
 }
 `
 

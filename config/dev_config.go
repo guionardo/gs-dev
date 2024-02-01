@@ -2,6 +2,7 @@ package config
 
 import (
 	"path"
+	"sync"
 	"time"
 
 	"github.com/guionardo/gs-dev/internal"
@@ -12,6 +13,7 @@ import (
 
 type DevConfig struct {
 	fileName        string
+	lock            sync.Mutex
 	Folders         map[string]*internal.PathList `yaml:"folders"`
 	LastSync        time.Time                     `yaml:"last_sync"`
 	MaxSyncInterval time.Duration                 `yaml:"max_sync_interval"`

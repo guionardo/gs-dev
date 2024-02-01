@@ -3,11 +3,13 @@ package config
 import (
 	"path"
 	"sort"
+	"sync"
 	"time"
 )
 
 type TodoConfig struct {
 	fileName        string
+	lock            sync.Mutex
 	Todos           []*TodoItem   `yaml:"todos"`
 	LastSync        time.Time     `yaml:"last_sync"`
 	MaxSyncInterval time.Duration `yaml:"max_sync_interval"`

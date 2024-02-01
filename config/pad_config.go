@@ -1,9 +1,13 @@
 package config
 
-import "path"
+import (
+	"path"
+	"sync"
+)
 
 type PadConfig struct {
 	fileName   string
+	lock       sync.Mutex
 	BackendUrl string `yaml:"backend_url"`
 	ApiKey     string `yaml:"api_key"`
 }
