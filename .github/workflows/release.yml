@@ -5,6 +5,13 @@ on:
     types: [created]
 
 jobs:
+  update-report-card:
+    name: Update report card
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request to goreportcard.com
+        run: curl 'https://goreportcard.com/checks' --data-raw 'repo=github.com%2Fguionardo%2Fgs-dev'
+
   releases-matrix:
     name: Release Go Binary
     runs-on: ubuntu-latest
@@ -12,18 +19,15 @@ jobs:
       matrix:
         # build and publish in parallel: linux/386, linux/amd64, linux/arm64, windows/386, windows/amd64, darwin/amd64, darwin/arm64
         goos: [linux, windows]
-        goarch: [amd64, arm64]
-        exclude:
-          - goarch: arm64
-            goos: windows
+        goarch: [amd64]
+
     steps:
     - uses: actions/checkout@v2
-    - uses: wangyoucao577/go-release-action@v1.25
+    - uses: wangyoucao577/go-release-action@v1.46
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         goos: ${{ matrix.goos }}
         goarch: ${{ matrix.goarch }}
-        goarm: 5
         # goversion: "https://dl.google.com/go/go1.13.1.linux-amd64.tar.gz"
         # project_path: "./cmd/test-binary"
         # binary_name: "test-binary"
@@ -31,8 +35,8 @@ jobs:
 
   # release-linux-arm:
   #   name: release linux/arm
-  #   runs-on: ubuntu-latest    
-          
+  #   runs-on: ubuntu-latest
+
   #   steps:
   #     - uses: actions/checkout@v2
   #     - uses: wangyoucao577/go-release-action@v1.22
