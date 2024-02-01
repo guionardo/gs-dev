@@ -10,9 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Request to goreportcard.com
-        run: curl 'https://goreportcard.com/checks' --data-raw 'repo=github.com%2Fguionardo%2Fgs-dev'
+        run: curl -s 'https://goreportcard.com/checks' --data-raw 'repo=github.com%2Fguionardo%2Fgs-dev' | jq .
       - name: Read report data
-        run: curl -s https://goreportcard.com/report/github.com/guionardo/gs-dev | grep "var response = " | awk -F' ' '{for (i=4; i<NF; i++) printf("%s ", $i)}' | jq
+        run: curl -s 'https://goreportcard.com/report/github.com/guionardo/gs-dev' | grep "var response = " | awk -F' ' '{for (i=4; i<NF; i++) printf("%s ", $i)}' > report.json
+      - name: Parse JSON
+        run: "cat report.json | jq '{grade: .grade, average: .average, last_refresh: .last_refresh, did_error: .did_error}'"
 
   releases-matrix:
     name: Release Go Binary
