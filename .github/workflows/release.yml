@@ -9,11 +9,12 @@ jobs:
     name: Update report card
     runs-on: ubuntu-latest
     steps:
-      - name: Request to goreportcard.com
-        run: curl -s 'https://goreportcard.com/checks' --data-raw 'repo=github.com%2Fguionardo%2Fgs-dev' | jq .
-      - name: Read report data
-        run: curl -s 'https://goreportcard.com/report/github.com/guionardo/gs-dev' | grep "var response = " | awk -F' ' '{for (i=4; i<NF; i++) printf("%s ", $i)}' > report.json
-      - name: Parse JSON
+      - name: Request and extract Report Card
+        run: |
+          curl -s -o /dev/null  -w '%{http_code}' 'https://goreportcard.com/checks' --data-raw 'repo=github.com%2Fguionardo%2Fgs-dev'
+          curl -s 'https://goreportcard.com/report/github.com/guionardo/gs-dev' | grep "var response = " | awk -F' ' '{for (i=4; i<NF; i++) printf("%s ", $i)}' > report.json
+
+      - name: Generate summary
         run: |
           echo "### Resume! :rocket:" >> $GITHUB_STEP_SUMMARY
           echo "Grade        $(cat report.json | jq .grade)" >> $GITHUB_STEP_SUMMARY
@@ -37,4 +38,4 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         goos: ${{ matrix.goos }}
         goarch: ${{ matrix.goarch }}
-        extra_files: LICENSE README.md
+        extra_files: LICENSE README.md docs
