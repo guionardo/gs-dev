@@ -61,7 +61,6 @@ func init() {
 	}
 	ignoreChildCommand.Flags().BoolP(Enable, "e", false, "Enable children")
 	ignoreChildCommand.Flags().BoolP(Disable, "d", false, "Disable children")
-	ignoreChildCommand.MarkFlagsMutuallyExclusive(Enable, Disable)
 
 	devCmd.AddCommand(
 		addCommand,

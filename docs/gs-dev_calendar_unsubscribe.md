@@ -1,17 +1,15 @@
-## gs-dev calendar list
+## gs-dev calendar unsubscribe
 
-list all events
+Unsubscribe remote calendar
 
 ```
-gs-dev calendar list [flags]
+gs-dev calendar unsubscribe [flags]
 ```
 
 ### Options
 
 ```
-  -c, --calendars     Lista calendars and setup
-  -h, --help          help for list
-  -n, --no_uri_link   Disable console link for event URI
+  -h, --help   help for unsubscribe
 ```
 
 ### Options inherited from parent commands

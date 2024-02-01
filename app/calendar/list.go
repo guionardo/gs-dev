@@ -9,6 +9,7 @@ import (
 
 	"github.com/apognu/gocal"
 	"github.com/guionardo/gs-dev/config"
+	"github.com/guionardo/gs-dev/internal/utils"
 	"github.com/mitchellh/colorstring"
 )
 
@@ -29,6 +30,28 @@ func fetchAll(cfg *config.CalendarsConfig) {
 		}(cal)
 	}
 	wg.Wait()
+}
+
+func ListCalendars() error {
+	const dateTimeFormat = "02/01/2006 15:04"
+	cfg := getConfig()
+	if len(cfg.Calendars) == 0 {
+		fmt.Println("There are no subscribed calendars")
+		return nil
+	}
+	maxLength := 0
+	for name := range cfg.Calendars {
+		if len(name) > maxLength {
+			maxLength = len(name)
+		}
+	}
+	for _, cal := range cfg.Calendars {
+		colorstring.Printf("[green]%s[reset] @ %s\n", utils.Pad(cal.Name, maxLength, utils.Left), cal.LastFetch.Format(dateTimeFormat))
+	}
+	colorstring.Printf("[_cyan_][black]Enabled:[reset] %v\n", cfg.Enabled)
+	colorstring.Printf("[_cyan_][black]Range (now):[reset] %v (%s) to %v (%v)\n", -cfg.RangeInit, time.Now().Add(-cfg.RangeInit).Format(dateTimeFormat), cfg.RangeEnd, time.Now().Add(cfg.RangeEnd).Format("02/01/2006 15:04"))
+	colorstring.Printf("[_cyan_][black]Fetch Interval:[reset] %v\n", cfg.FetchInterval)
+	return nil
 }
 
 func List(noUriLink bool) error {
@@ -85,7 +108,7 @@ func List(noUriLink bool) error {
 		}
 		colorstring.Printf(timePrefix+"%s", eventDateTime.Format("15:04"))
 
-		calName := fmt.Sprintf(fmt.Sprintf(" %%-%ds", maxNameLength), event.CalendarName)
+		calName := utils.Pad(event.CalendarName, maxNameLength, utils.Left)
 		colorstring.Printf(calendarColors[calName]+"[bold]%s[default]: ", calName)
 
 		// fmt.Printf("%s on %s by %s %s\n", e.Summary, e.Start, e.Organizer.Cn, url)

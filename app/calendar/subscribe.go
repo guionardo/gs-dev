@@ -9,6 +9,7 @@ import (
 
 	"github.com/apognu/gocal"
 	"github.com/guionardo/gs-dev/config"
+	"github.com/guionardo/gs-dev/configs"
 )
 
 func Subscribe(name string, uri string) error {
@@ -39,6 +40,23 @@ func Subscribe(name string, uri string) error {
 	cfg.Calendars[name] = cal
 	return cfg.Save()
 
+}
+
+func Unsubscribe(calendarName string) error {
+	cfg := getConfig()
+	if _, ok := cfg.Calendars[calendarName]; !ok {
+		return fmt.Errorf("calendar %s does not exists", calendarName)
+	}
+	if !configs.Confirm("Confirm unsubscribing of "+calendarName+" calendar", false) {
+		return nil
+	}
+	delete(cfg.Calendars, calendarName)
+	if err := cfg.Save(); err == nil {
+		fmt.Printf("Calendar %s was unsubscribed\n", calendarName)
+	} else {
+		return fmt.Errorf("failed to unsubscribe calendar %s - %v", calendarName, err)
+	}
+	return nil
 }
 
 func syncCacheCalendar(cfg *config.CalendarsConfig, cal *config.CalendarConfig) error {

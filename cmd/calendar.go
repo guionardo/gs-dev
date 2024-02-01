@@ -41,18 +41,27 @@ func init() {
 	subscribeCalendarCmd.Flags().StringP("uri", "u", "", "Remote calendar URI (ics)")
 	subscribeCalendarCmd.Flags().StringP("name", "n", "", "Calendar name")
 
+	unsubscribeCalendarCmd := &cobra.Command{
+		Use:   "unsubscribe",
+		Short: "Unsubscribe remote calendar",
+		RunE:  unsubscribeCalendar,
+		Args:  cobra.ExactArgs(1),
+	}
+
 	listCmd := &cobra.Command{
 		Use:   "list",
 		Short: "list all events",
 		RunE:  calendarList,
 	}
 	listCmd.Flags().BoolP("no_uri_link", "n", false, "Disable console link for event URI")
+	listCmd.Flags().BoolP("calendars", "c", false, "Lista calendars and setup")
 
 	calendarCmd.AddCommand(
 		setupCmd,
 		enableCmd,
 		disableCmd,
 		subscribeCalendarCmd,
+		unsubscribeCalendarCmd,
 		listCmd,
 	)
 
@@ -68,6 +77,10 @@ func setupCalendar(cmd *cobra.Command, args []string) error {
 
 func calendarList(cmd *cobra.Command, args []string) error {
 	noUriLink, _ := cmd.Flags().GetBool("no_uri_link")
+	listCalendars, _ := cmd.Flags().GetBool("calendars")
+	if listCalendars {
+		return calendar.ListCalendars()
+	}
 	return calendar.List(noUriLink)
 }
 
@@ -83,4 +96,8 @@ func enableCalendar(cmd *cobra.Command, args []string) error {
 
 func disableCalendar(cmd *cobra.Command, args []string) error {
 	return calendar.Disable()
+}
+
+func unsubscribeCalendar(cmd *cobra.Command, args []string) error {
+	return calendar.Unsubscribe(args[0])
 }
