@@ -46,4 +46,16 @@ devdbg_1() {
   GS_DEV --debug --output="GS_OUTPUT" $@ && _dev
 }
 
+_last_calendar_show=0
+show_calendar() {
+  local _elapsed
+  _elapsed=$(( $SECONDS - $_last_calendar_show ))
+  if [ $_elapsed -gt 300 ]; then
+    GS_DEV calendar list
+    _last_calendar_show=$SECONDS
+  fi
+}
+
+trap show_calendar DEBUG
+
 echo "GS_TOOL is ready to use (dev, devdbg)"

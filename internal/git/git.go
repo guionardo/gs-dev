@@ -32,7 +32,7 @@ func GetRemoteHttpURL(folderName string) (string, error) {
 
 func getHttpUrl(url string) (string, error) {
 	gu, err := Parse(url)
-	if !gu.Success || err != nil {
+	if err != nil || !gu.Success {
 		return "", fmt.Errorf("invalid git url: %s", url)
 	}
 	return gu.GetURL(), nil

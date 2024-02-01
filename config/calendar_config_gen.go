@@ -7,7 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func (cfg *DevConfig) Save() (err error) {
+func (cfg *CalendarsConfig) Save() (err error) {
 	cfg.lock.Lock()
 	defer cfg.lock.Unlock()
 	var content []byte
@@ -17,7 +17,7 @@ func (cfg *DevConfig) Save() (err error) {
 	return
 }
 
-func (cfg *DevConfig) Load() (err error) {
+func (cfg *CalendarsConfig) Load() (err error) {
 	cfg.lock.Lock()
 	defer cfg.lock.Unlock()
 	var content []byte

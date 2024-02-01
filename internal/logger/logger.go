@@ -1,8 +1,9 @@
 package logger
 
 import (
-	"fmt"
 	"os"
+
+	"github.com/mitchellh/colorstring"
 )
 
 var debugMode = false
@@ -24,28 +25,28 @@ func IsDebugMode() bool {
 }
 
 func log(level string, format string, startColor string, args ...interface{}) {
-	fmt.Printf(startColor+level+format+Reset+"\n", args...)
+	colorstring.Printf("["+startColor+"]"+level+format+"\n", args...)
 }
 
 func Debug(format string, args ...interface{}) {
 	if debugMode {
-		log(debugLabel, format, Blue, args...)
+		log(debugLabel, format, "blue", args...)
 	}
 }
 
 func Warn(format string, args ...interface{}) {
-	log(warnLabel, format, Yellow, args...)
+	log(warnLabel, format, "yellow", args...)
 }
 
 func Info(format string, args ...interface{}) {
-	log(infoLabel, format, Green, args...)
+	log(infoLabel, format, "green", args...)
 }
 
 func Error(format string, args ...interface{}) {
-	log(errorLabel, format, Red, args...)
+	log(errorLabel, format, "red", args...)
 }
 
 func Fatal(format string, args ...interface{}) {
-	log(fatalLabel, format, Red, args...)
+	log(fatalLabel, format, "red", args...)
 	os.Exit(1)
 }
