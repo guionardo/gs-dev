@@ -1,6 +1,7 @@
 package calendar
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -19,6 +20,9 @@ type EventItem struct {
 }
 
 func fetchAll(cfg *config.CalendarsConfig) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go RunProgress("Fetching calendars", "Done", ctx)
 	wg := sync.WaitGroup{}
 	wg.Add(len(cfg.Calendars))
 	for _, cal := range cfg.Calendars {
@@ -82,6 +86,7 @@ func List(noUriLink bool) error {
 			})
 		}
 	}
+	fmt.Println()
 	if len(eventList) == 0 {
 		fmt.Println("No events on calendar")
 		return nil
