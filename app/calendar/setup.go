@@ -33,3 +33,11 @@ func Disable() error {
 	cfg.Enabled = false
 	return cfg.Save()
 }
+
+func Check() error {
+	cfg := getConfig()
+	if !cfg.Enabled || len(cfg.Calendars) == 0 {
+		return errors.New("no calendars enabled")
+	}
+	return nil
+}

@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/guionardo/gs-dev/app/calendar"
 	"github.com/guionardo/gs-dev/config"
 	"github.com/spf13/cobra"
@@ -56,6 +58,21 @@ func init() {
 	listCmd.Flags().BoolP("no_uri_link", "n", false, "Disable console link for event URI")
 	listCmd.Flags().BoolP("calendars", "c", false, "Lista calendars and setup")
 
+	checkEnabledCmd := &cobra.Command{
+		Use:   "check",
+		Short: "Check if there is any calendar enabled",
+		Long:  "Exits with 1 if there are no calendar enabled",
+		Run:   calendarCheck,
+		PostRun: func(cmd *cobra.Command, args []string) {
+			if cmd.Annotations == nil {
+				return
+			}
+			if _, ok := cmd.Annotations["error"]; ok {
+				os.Exit(1)
+			}
+		},
+	}
+
 	calendarCmd.AddCommand(
 		setupCmd,
 		enableCmd,
@@ -63,6 +80,7 @@ func init() {
 		subscribeCalendarCmd,
 		unsubscribeCalendarCmd,
 		listCmd,
+		checkEnabledCmd,
 	)
 
 	rootCmd.AddCommand(calendarCmd)
@@ -100,4 +118,11 @@ func disableCalendar(cmd *cobra.Command, args []string) error {
 
 func unsubscribeCalendar(cmd *cobra.Command, args []string) error {
 	return calendar.Unsubscribe(args[0])
+}
+
+func calendarCheck(cmd *cobra.Command, args []string) {
+	if err := calendar.Check(); err != nil {
+		cmd.Annotations = make(map[string]string)
+		cmd.Annotations["error"] = "no calendars"
+	}
 }

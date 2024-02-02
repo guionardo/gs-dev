@@ -40,7 +40,7 @@ func ListCalendars() error {
 	const dateTimeFormat = "02/01/2006 15:04"
 	cfg := getConfig()
 	if len(cfg.Calendars) == 0 {
-		fmt.Println("There are no subscribed calendars")
+		fmt.Println("📅 There are no subscribed calendars")
 		return nil
 	}
 	maxLength := 0
@@ -49,6 +49,7 @@ func ListCalendars() error {
 			maxLength = len(name)
 		}
 	}
+	fmt.Println("📅 Calendars")
 	for _, cal := range cfg.Calendars {
 		colorstring.Printf("[green]%s[reset] @ %s\n", utils.Pad(cal.Name, maxLength, utils.Left), cal.LastFetch.Format(dateTimeFormat))
 	}

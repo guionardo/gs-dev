@@ -56,6 +56,13 @@ show_calendar() {
   fi
 }
 
-trap show_calendar DEBUG
 
 echo "GS_TOOL is ready to use (dev, devdbg)"
+if GS_DEV calendar check ; then
+  # trap show_calendar DEBUG
+  PROMPT_COMMAND="show_calendar"
+  GS_DEV calendar list --calendars
+  GS_DEV calendar list
+else
+  echo "calendar is disabled"
+fi
