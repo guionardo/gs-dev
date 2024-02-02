@@ -109,7 +109,7 @@ func List(noUriLink bool) error {
 		colorstring.Printf(timePrefix+"%s", eventDateTime.Format("15:04"))
 
 		calName := utils.Pad(event.CalendarName, maxNameLength, utils.Left)
-		colorstring.Printf(calendarColors[calName]+"[bold]%s[default]: ", calName)
+		colorstring.Printf(calendarColors[calName]+" [bold]%s[default]: ", calName)
 
 		// fmt.Printf("%s on %s by %s %s\n", e.Summary, e.Start, e.Organizer.Cn, url)
 		fmt.Printf("- %s\n", event.Event.Summary)
