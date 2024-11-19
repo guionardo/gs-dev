@@ -1,0 +1,103 @@
+package install
+
+import (
+	"fmt"
+	"os"
+	"strings"
+
+	"github.com/guionardo/gs-dev/internal/metadata"
+	"github.com/guionardo/gs-dev/pkg/plugins"
+	"github.com/guionardo/gs-dev/plugins/commons"
+
+	"github.com/spf13/cobra"
+)
+
+type InstallShell struct {
+	commons.BasePlugin
+	sourceCommand string
+}
+
+func NewInstallShell() *InstallShell {
+	return &InstallShell{
+		BasePlugin: commons.BasePlugin{
+			PluginName:    "install",
+			CanBeDisabled: false,
+			Enabled:       true,
+		},
+	}
+}
+
+func (i *InstallShell) Setup(manager plugins.PluginsManager, configurationFolder string) (err error) {
+	i.BaseSetup(manager)
+
+	// Source command
+	//	source <(./go-dev init)
+	if executableName, err := os.Executable(); err == nil {
+		if strings.Contains(executableName, "__debug_bin") {
+			// Running from vscode
+			err = fmt.Errorf("bad executable name %s", executableName)
+		} else {
+			i.sourceCommand = fmt.Sprintf("source <(%s init)", executableName)
+		}
+	}
+
+	return
+}
+
+func (i InstallShell) RunInstall(cmd *cobra.Command) error {
+	//	source <(./gs-dev init)
+	profile, err := NewProfileFile(metadata.AppName)
+	if err != nil {
+		return err
+	}
+	if line, ok := profile.HasEnabledCommandLine(); ok {
+		return fmt.Errorf("binding was just installed into shell profile %s at line %d",
+			profile.Path, line)
+	}
+	profile.SetFeature(i.sourceCommand, true)
+	if err := profile.Save(); err != nil {
+		return fmt.Errorf("error saving profile %s - %v", profile.Path, err)
+	}
+	cmd.Printf("binding installed at file %s\nbackup done at %s", profile.Path, profile.LastBackup)
+	return nil
+}
+
+func (i InstallShell) RunUninstall(cmd *cobra.Command) error {
+	profile, err := NewProfileFile(metadata.AppName)
+	if err != nil {
+		return err
+	}
+	if _, ok := profile.HasEnabledCommandLine(); !ok {
+		return fmt.Errorf("binding was not installed into shell profile %s",
+			profile.Path)
+	}
+	profile.SetFeature(i.sourceCommand, false)
+	if err := profile.Save(); err != nil {
+		return fmt.Errorf("error saving profile %s - %v", profile.Path, err)
+	}
+	cmd.Printf("binding uninstalled at file %s\nbackup done at %s", profile.Path, profile.LastBackup)
+	return nil
+}
+
+func (i InstallShell) Run(cmd *cobra.Command, args []string) error {
+	if uninstall, err := cmd.Flags().GetBool("uninstall"); err != nil {
+		return err
+	} else {
+		if i.sourceCommand == "" {
+			return fmt.Errorf("cannot [un]install %s when running on vscode", metadata.AppName)
+		}
+		if uninstall {
+			return i.RunUninstall(cmd)
+		}
+		return i.RunInstall(cmd)
+	}
+}
+func (i InstallShell) GetCobraCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   i.PluginName,
+		Short: "Install bindings on your shell profile",
+		RunE:  i.Run,
+	}
+	cmd.Flags().BoolP("uninstall", "u", false, "Uninstall bindings")
+	return cmd
+}
