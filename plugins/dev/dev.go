@@ -126,7 +126,7 @@ func (d *Dev) RunFind(cmd *cobra.Command, args []string) (err error) {
 		}
 	}
 
-	return nil
+	return err
 }
 
 func (d *Dev) Find(words []string) []string {
@@ -142,26 +142,30 @@ func (d *Dev) Find(words []string) []string {
 }
 
 func (d *Dev) Sync() (err error) {
+	filter := NewReaderFilter()
 	for rootFolder, root := range d.rootsConfiguration.Roots {
-		colors.Normal("Syncing %s ...\n", rootFolder)
-		folders, err := readFolders(rootFolder, root.MaxDepth)
-		if err == nil {
-			diffs := arrays.GetArraysDiffs(d.rootsConfiguration.Roots[rootFolder].Folders, folders)
-			root.Folders = folders
-			d.rootsConfiguration.Roots[rootFolder] = root
-			if len(diffs) == 0 {
-				colors.Normal("No changes\n")
-			} else {
-				colors.Blue("%d changes:\n", len(diffs))
-				for index := range diffs {
-					if diffs[index][0] == '+' {
-						colors.Green(diffs[index] + "\n")
-					} else {
-						colors.Red(diffs[index] + "\n")
-					}
+		reader := NewDirReader(filter, rootFolder)
+		folders := make([]string, 0, 16)
+		for folder := range reader.Folders() {
+			folders = append(folders, folder)
+		}
+
+		diffs := arrays.GetArraysDiffs(d.rootsConfiguration.Roots[rootFolder].Folders, folders)
+		root.Folders = folders
+		d.rootsConfiguration.Roots[rootFolder] = root
+		if len(diffs) == 0 {
+			colors.Normal("No changes\n")
+		} else {
+			colors.Blue("%d changes:\n", len(diffs))
+			for index := range diffs {
+				if diffs[index][0] == '+' {
+					colors.Green(diffs[index] + "\n")
+				} else {
+					colors.Red(diffs[index] + "\n")
 				}
 			}
 		}
+
 	}
 	d.configuration.LastSync = time.Now()
 	if err = commons.SaveConfiguration(d, d.rootsConfiguration, "roots"); err == nil {

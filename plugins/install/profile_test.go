@@ -6,6 +6,10 @@ import (
 )
 
 func TestNewProfileFile(t *testing.T) {
+	if shell := os.Getenv("SHELL"); len(shell) == 0 {
+		t.Skipf("SHELL NOT FOUND")
+		return
+	}
 	p, err := NewProfileFile("test")
 	if err != nil {
 		t.Errorf("NewProfileFile() error = %v", err)
