@@ -8,3 +8,4 @@
 Github actions good ideas!
 
 * https://github.com/daytonaio/daytona/tree/main/.github/workflows
+* https://github.com/gofr-dev/gofr/blob/development/.github/workflows/go.yml
