@@ -1,21 +1,26 @@
-package metadata
+package build
 
 import (
 	"runtime/debug"
 )
 
-var Version string
-
 const AppName = "gs-dev"
 const AppDescription = "Go development tools"
 
-// https://jerrynsh.com/3-easy-ways-to-add-version-flag-in-go
+const DevVersion = "develop"
+const unknown = "unknown"
 
-// printVersion prints the application version
+var Version = DevVersion
+var BuildInfo = unknown
+
 func init() {
+	if Version == DevVersion {
+		return
+	}
+	// https://jerrynsh.com/3-easy-ways-to-add-version-flag-in-go
 	buildInfo, ok := debug.ReadBuildInfo()
 	if !ok {
-		Version = "develop"
+		Version = DevVersion
 		return
 	}
 
@@ -23,6 +28,4 @@ func init() {
 		Version = buildInfo.Main.Version
 		return
 	}
-	Version = "develop"
-
 }

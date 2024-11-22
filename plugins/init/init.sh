@@ -3,7 +3,6 @@
 _run_gs_dev() {
   doesnt_use_output=(GS_DOESNT_USE_OUTPUT)
 
-  # debug=(( "$1" == "DEBUG" ? "--debug" : ""))
   if [[ "$1" == "DEBUG" ]]; then
     debug="--debug"
   else
@@ -58,11 +57,11 @@ show_calendar() {
 
 
 echo "GS_TOOL is ready to use (dev, devdbg)"
-if GS_DEV calendar check ; then
-  # trap show_calendar DEBUG
-  PROMPT_COMMAND="show_calendar"
-  GS_DEV calendar list --calendars
-  GS_DEV calendar list
-else
-  echo "calendar is disabled"
-fi
+# if GS_DEV calendar check ; then
+#   # trap show_calendar DEBUG
+#   PROMPT_COMMAND="show_calendar"
+#   GS_DEV calendar list --calendars
+#   GS_DEV calendar list
+# else
+#   echo "calendar is disabled"
+# fi

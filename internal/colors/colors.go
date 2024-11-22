@@ -12,17 +12,17 @@ var (
 )
 
 func Normal(msg string, a ...interface{}) {
-	normal(msg, a...)
+	_, _ = normal(msg, a...)
 }
 
 func Red(msg string, a ...interface{}) {
-	red(msg, a...)
+	_, _ = red(msg, a...)
 }
 
 func Green(msg string, a ...interface{}) {
-	green(msg, a...)
+	_, _ = green(msg, a...)
 }
 
 func Blue(msg string, a ...interface{}) {
-	blue(msg, a...)
+	_, _ = blue(msg, a...)
 }

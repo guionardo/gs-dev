@@ -15,7 +15,7 @@ func TestArrayHasValue(t *testing.T) {
 		want     bool
 	}{
 		{"Find_ints_with_default_comparer", []any{1, 2, 3, 4, 5}, 3, nil, true},
-		{"Find_string_with_case_comparer", []any{"apple", "banana", "cherry"}, "Banana", func(j, i any) bool { return strings.ToLower(j.(string)) == strings.ToLower(i.(string)) }, true},
+		{"Find_string_with_case_comparer", []any{"apple", "banana", "cherry"}, "Banana", func(j, i any) bool { return strings.EqualFold(j.(string), i.(string)) }, true},
 		{"Find_ints_with_missing_value", []any{1, 2}, 3, nil, false},
 	}
 	for _, tt := range tests {
