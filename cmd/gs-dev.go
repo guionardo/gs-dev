@@ -13,39 +13,44 @@ import (
 	"github.com/guionardo/gs-dev/plugins/install"
 	"github.com/guionardo/gs-dev/plugins/manager"
 	"github.com/guionardo/gs-dev/plugins/plugins"
+	"github.com/guionardo/gs-dev/plugins/url"
 )
 
 func setupPlugins() {
-	manager.Plugins.Register(dev.NewDev(), plugins.NewPluginSetup(), initshell.NewInitShell(), install.NewInstallShell())
+	manager.Plugins.Register(dev.NewDev(), plugins.NewPluginSetup(), initshell.NewInitShell(), install.NewInstallShell(), url.NewURL())
 }
 
 // preRunArgs is a function that runs before the CLI command is executed,
-func preRunArgs() []string {
+func preRunArgs() ([]string, string) {
 	logLevel := slog.LevelInfo
 	args := make([]string, 0, len(os.Args))
-	for i := range os.Args {
-		if i == 0 {
-			continue
-		}
-		arg := strings.ToLower(os.Args[i])
+	var command string
+	for _, arg := range os.Args[1:] {
 		if arg == "--debug" {
 			logLevel = slog.LevelDebug
 			continue
 		}
-		args = append(args, os.Args[i])
+		if len(command) == 0 && !strings.HasPrefix(arg, "--") {
+			command = arg
+		}
+		args = append(args, arg)
 	}
 	slog.SetLogLoggerLevel(logLevel)
 	slog.Debug("Debug mode enabled")
-	return args
+	return args, command
 }
 
 func main() {
-	args := preRunArgs()
+	args, _ := preRunArgs()
 	setupPlugins()
 	slog.Debug("Starting gs-dev", slog.String("version", metadata.Version))
 
 	manager.Plugins.Setup(config.GetConfigDir())
 	rootCmd := manager.Plugins.GetRootCommand()
+	if cmd, _, err := rootCmd.Find(args); err != nil || cmd == nil {
+		args = append([]string{"dev"}, args...)
+	}
 	rootCmd.SetArgs(args)
+
 	rootCmd.Execute()
 }

@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path"
 	"path/filepath"
 	"time"
 
 	"github.com/guionardo/gs-dev/internal/arrays"
 	"github.com/guionardo/gs-dev/internal/colors"
+	"github.com/guionardo/gs-dev/internal/metadata"
 	"github.com/guionardo/gs-dev/pkg/plugins"
 	"github.com/guionardo/gs-dev/plugins/commons"
 	"github.com/spf13/cobra"
@@ -92,9 +94,8 @@ func (d *Dev) deleteRoot(root string) (err error) {
 }
 
 func (d *Dev) RunFind(cmd *cobra.Command, args []string) (err error) {
-	output, _ := cmd.Flags().GetString("output")
-	if output != "" {
-		os.Remove(output)
+	if flagOutput != "" {
+		os.Remove(flagOutput)
 	}
 	slog.Debug("Running dev find", slog.Any("args", args))
 	if flagAdd != "" {
@@ -119,10 +120,12 @@ func (d *Dev) RunFind(cmd *cobra.Command, args []string) (err error) {
 	folder, err := chooseFolder(folders)
 
 	if err == nil {
-		if len(output) > 0 {
-			err = os.WriteFile(output, []byte("cd "+folder), 0644)
+		content := "cd " + folder
+		if len(flagOutput) > 0 {
+			err = os.WriteFile(flagOutput, []byte(content), 0644)
+			slog.Debug("Writing output", slog.String("file", flagOutput), slog.String("content", content), slog.Any("error", err))
 		} else {
-			fmt.Printf("cd %s\n", folder)
+			fmt.Println(content)
 		}
 	}
 
@@ -197,7 +200,7 @@ func (d *Dev) GetCobraCommand() *cobra.Command {
 	cmd.Flags().StringVarP(&flagDel, "delete", "d", "", "Delete folder from roots")
 	cmd.Flags().Lookup("delete").NoOptDefVal = wd
 	cmd.Flags().BoolVarP(&flagSync, "sync", "s", false, "Sync folders")
-	cmd.Flags().StringP("output", "o", flagOutput, "Output script for shell alias")
+	cmd.Flags().StringVarP(&flagOutput, "output", "o", path.Join(os.TempDir(), metadata.AppName), "Output script for shell alias")
 
 	return cmd
 }

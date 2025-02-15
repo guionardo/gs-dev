@@ -4,11 +4,11 @@ _run_gs_dev() {
   doesnt_use_output=(GS_DOESNT_USE_OUTPUT)
 
   # debug=(( "$1" == "DEBUG" ? "--debug" : ""))
-  if [[ "$1" == "DEBUG" ]]; then
+  # if [[ "$1" == "DEBUG" ]]; then
     debug="--debug"
-  else
-    debug=""
-  fi
+  # else
+    # debug=""
+  # fi
 
   shift 1
 
@@ -26,7 +26,7 @@ _gsdev_treat_output() {
     return
   fi
   source "GS_OUTPUT"
-  rm "GS_OUTPUT"
+  rm --force "GS_OUTPUT"
   stty sane
 }
 
@@ -34,35 +34,5 @@ dev() {
   _run_gs_dev NODEBUG $@
 }
 
-devdbg() {
-  _run_gs_dev DEBUG $@
-}
 
-dev_1() {
-  GS_DEV --output="GS_OUTPUT" $@ && _dev
-}
-
-devdbg_1() {
-  GS_DEV --debug --output="GS_OUTPUT" $@ && _dev
-}
-
-_last_calendar_show=0
-show_calendar() {
-  local _elapsed
-  _elapsed=$(( $SECONDS - $_last_calendar_show ))
-  if [ $_elapsed -gt 300 ]; then
-    GS_DEV calendar list
-    _last_calendar_show=$SECONDS
-  fi
-}
-
-
-echo "GS_TOOL is ready to use (dev, devdbg)"
-if GS_DEV calendar check ; then
-  # trap show_calendar DEBUG
-  PROMPT_COMMAND="show_calendar"
-  GS_DEV calendar list --calendars
-  GS_DEV calendar list
-else
-  echo "calendar is disabled"
-fi
+echo "GS_TOOL is ready to use (dev)"

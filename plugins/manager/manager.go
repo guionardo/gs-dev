@@ -64,7 +64,9 @@ func (p *Manager) GetPlugin(name string) (plugins.CliPlugin, bool) {
 }
 
 func (p *Manager) GetRootCommand() *cobra.Command {
-	rootCmd := &cobra.Command{Use: metadata.AppName}
+	rootCmd := &cobra.Command{
+		Use: metadata.AppName,
+	}
 	rootCmd.Flags().Bool("debug", false, "Enable debug mode")
 	for index := range p.plugins {
 		if !p.plugins[index].IsEnabled() {
