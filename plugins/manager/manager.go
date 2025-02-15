@@ -2,8 +2,12 @@ package manager
 
 import (
 	"log/slog"
+	"os"
+	"path"
 
+	"github.com/guionardo/gs-dev/app/build"
 	"github.com/guionardo/gs-dev/internal/metadata"
+	outputfile "github.com/guionardo/gs-dev/internal/output_file"
 	"github.com/guionardo/gs-dev/pkg/plugins"
 	"github.com/spf13/cobra"
 )
@@ -13,6 +17,8 @@ type Manager struct {
 	rootCmd *cobra.Command
 }
 
+var flagOutput string
+
 func (p *Manager) Register(cp ...plugins.CliPlugin) {
 	for _, plugin := range cp {
 		p.plugins[plugin.Name()] = plugin
@@ -21,6 +27,7 @@ func (p *Manager) Register(cp ...plugins.CliPlugin) {
 }
 
 func (p *Manager) Setup(configurationFolder string) (err error) {
+
 	for index := range p.plugins {
 		err = p.plugins[index].Setup(p, configurationFolder)
 		cfg := p.plugins[index].GetConfiguration()
@@ -58,16 +65,31 @@ func (p *Manager) GetPluginNames() []string {
 
 func (p *Manager) GetPlugin(name string) (plugins.CliPlugin, bool) {
 	if plugin, ok := p.plugins[name]; ok {
-		return plugin.(plugins.CliPlugin), ok
+		return plugin, ok
 	}
 	return nil, false
 }
 
+func (p *Manager) PreRun(cmd *cobra.Command, args []string) error {
+	Output.SetFile(flagOutput)
+	return nil
+}
+
+func (p *Manager) PostRun(cmd *cobra.Command, args []string) error {
+	Output.Close()
+	return nil
+}
+
 func (p *Manager) GetRootCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
-		Use: metadata.AppName,
+		Use:                metadata.AppName,
+		Short:              metadata.ShortDescription,
+		Long:               metadata.Description,
+		PersistentPreRunE:  p.PreRun,
+		PersistentPostRunE: p.PostRun,
 	}
 	rootCmd.Flags().Bool("debug", false, "Enable debug mode")
+	rootCmd.Flags().StringVarP(&flagOutput, "output", "o", path.Join(os.TempDir(), metadata.AppName), "Output script for shell alias")
 	for index := range p.plugins {
 		if !p.plugins[index].IsEnabled() {
 			continue
@@ -77,21 +99,28 @@ func (p *Manager) GetRootCommand() *cobra.Command {
 		}
 	}
 
-	rootCmd.AddCommand(&cobra.Command{
+	versionCmd := &cobra.Command{
 		Use:   "version",
 		Short: "Application version",
 		Run: func(cmd *cobra.Command, args []string) {
-			cmd.Printf("%s %s\n", metadata.AppName, metadata.Version)
+			cmd.Printf("%s %s\n", build.AppName, build.Version)
+			cmd.Printf("Build info %s\n", build.BuildInfo)
 		},
-	})
+	}
+
+	rootCmd.AddCommand(versionCmd)
 	p.rootCmd = rootCmd
 	return p.rootCmd
 }
 
-var Plugins plugins.PluginsManager
+var (
+	Plugins plugins.PluginsManager
+	Output  *outputfile.OutputFile
+)
 
 func init() {
 	Plugins = &Manager{
 		plugins: make(map[string]plugins.CliPlugin),
 	}
+	Output = &outputfile.OutputFile{}
 }

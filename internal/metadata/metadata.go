@@ -8,6 +8,9 @@ var Version string
 
 const AppName = "gs-dev"
 const AppDescription = "Go development tools"
+const ShortDescription = "Guiosoft Development Assistant"
+const Description = `Guiosoft Development Assistant is a tool for helping
+the developer in your tasks.`
 
 // https://jerrynsh.com/3-easy-ways-to-add-version-flag-in-go
 

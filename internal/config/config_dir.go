@@ -7,7 +7,7 @@ import (
 	"path"
 	"sync"
 
-	"github.com/guionardo/gs-dev/internal/metadata"
+	"github.com/guionardo/gs-dev/app/build"
 )
 
 const CONFIG_DIR_ENV = "GS_DEV_CONFIG_DIR"
@@ -31,7 +31,7 @@ func getConfigDir(appName string) (configDir string, err error) {
 
 func GetConfigDir(appName ...string) string {
 	if len(appName) == 0 {
-		appName = []string{metadata.AppName}
+		appName = []string{build.AppName}
 	}
 	return sync.OnceValue(func() string {
 		if cd, err := getConfigDir(appName[0]); err != nil {

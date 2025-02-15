@@ -5,48 +5,54 @@ import (
 	"os"
 	"strings"
 
-	"github.com/guionardo/gs-dev/internal/metadata"
+	"github.com/guionardo/gs-dev/app/build"
+	outputfile "github.com/guionardo/gs-dev/internal/output_file"
 	"github.com/guionardo/gs-dev/pkg/plugins"
 	"github.com/guionardo/gs-dev/plugins/commons"
 
 	"github.com/spf13/cobra"
 )
 
-type InstallShell struct {
+type InstallShellPlugin struct {
 	commons.BasePlugin
 	sourceCommand string
 }
 
-func NewInstallShell() *InstallShell {
-	return &InstallShell{
+func Constructor(output *outputfile.OutputFile) plugins.CliPlugin {
+	return &InstallShellPlugin{
 		BasePlugin: commons.BasePlugin{
 			PluginName:    "install",
 			CanBeDisabled: false,
 			Enabled:       true,
+			Output:        output,
 		},
 	}
 }
 
-func (i *InstallShell) Setup(manager plugins.PluginsManager, configurationFolder string) (err error) {
+func (i *InstallShellPlugin) Setup(manager plugins.PluginsManager, configurationFolder string) error {
 	i.BaseSetup(manager)
 
 	// Source command
 	//	source <(./go-dev init)
-	if executableName, err := os.Executable(); err == nil {
-		if strings.Contains(executableName, "__debug_bin") {
-			// Running from vscode
-			err = fmt.Errorf("bad executable name %s", executableName)
-		} else {
-			i.sourceCommand = fmt.Sprintf("source <(%s init)", executableName)
-		}
+	executableName, err := os.Executable()
+
+	if err != nil {
+		return err
 	}
 
-	return
+	i.sourceCommand = fmt.Sprintf("source <(%s init)", executableName)
+
+	return nil
 }
 
-func (i InstallShell) RunInstall(cmd *cobra.Command) error {
+func (i InstallShellPlugin) RunInstall(cmd *cobra.Command) error {
 	//	source <(./gs-dev init)
-	profile, err := NewProfileFile(metadata.AppName)
+
+	if strings.Contains(i.sourceCommand, "__debug_bin") {
+		// Running from vscode
+		return fmt.Errorf("bad executable name %s", i.sourceCommand)
+	}
+	profile, err := NewProfileFile(build.AppName)
 	if err != nil {
 		return err
 	}
@@ -62,8 +68,8 @@ func (i InstallShell) RunInstall(cmd *cobra.Command) error {
 	return nil
 }
 
-func (i InstallShell) RunUninstall(cmd *cobra.Command) error {
-	profile, err := NewProfileFile(metadata.AppName)
+func (i InstallShellPlugin) RunUninstall(cmd *cobra.Command) error {
+	profile, err := NewProfileFile(build.AppName)
 	if err != nil {
 		return err
 	}
@@ -79,12 +85,12 @@ func (i InstallShell) RunUninstall(cmd *cobra.Command) error {
 	return nil
 }
 
-func (i InstallShell) Run(cmd *cobra.Command, args []string) error {
+func (i InstallShellPlugin) Run(cmd *cobra.Command, args []string) error {
 	if uninstall, err := cmd.Flags().GetBool("uninstall"); err != nil {
 		return err
 	} else {
 		if i.sourceCommand == "" {
-			return fmt.Errorf("cannot [un]install %s when running on vscode", metadata.AppName)
+			return fmt.Errorf("cannot [un]install %s when running on vscode", build.AppName)
 		}
 		if uninstall {
 			return i.RunUninstall(cmd)
@@ -92,7 +98,7 @@ func (i InstallShell) Run(cmd *cobra.Command, args []string) error {
 		return i.RunInstall(cmd)
 	}
 }
-func (i InstallShell) GetCobraCommand() *cobra.Command {
+func (i InstallShellPlugin) GetCobraCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   i.PluginName,
 		Short: "Install bindings on your shell profile",

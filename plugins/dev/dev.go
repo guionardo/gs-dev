@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"path"
 	"path/filepath"
 	"time"
 
 	"github.com/guionardo/gs-dev/internal/arrays"
 	"github.com/guionardo/gs-dev/internal/colors"
-	"github.com/guionardo/gs-dev/internal/metadata"
+	outputfile "github.com/guionardo/gs-dev/internal/output_file"
 	"github.com/guionardo/gs-dev/pkg/plugins"
 	"github.com/guionardo/gs-dev/plugins/commons"
 	"github.com/spf13/cobra"
@@ -19,29 +18,29 @@ import (
 const devName = "dev"
 
 var (
-	flagAdd    string
-	flagDel    string
-	flagSync   bool
-	flagOutput string
+	flagAdd  string
+	flagDel  string
+	flagSync bool
 )
 
-type Dev struct {
+type DevPlugin struct {
 	commons.BasePlugin
 	configuration      Configuration
 	rootsConfiguration RootsConfiguration
 }
 
-func NewDev() *Dev {
-	return &Dev{
+func Constructor(output *outputfile.OutputFile) plugins.CliPlugin {
+	return &DevPlugin{
 		BasePlugin: commons.BasePlugin{
 			PluginName:    devName,
 			CanBeDisabled: true,
 			Enabled:       true,
+			Output:        output,
 		},
 	}
 }
 
-func (d *Dev) Setup(manager plugins.PluginsManager, configurationFolder string) (err error) {
+func (d *DevPlugin) Setup(manager plugins.PluginsManager, configurationFolder string) (err error) {
 	d.BaseSetup(manager)
 
 	if err = commons.LoadConfiguration(d, &d.configuration, false); err == nil {
@@ -62,13 +61,13 @@ func (d *Dev) Setup(manager plugins.PluginsManager, configurationFolder string) 
 	return err
 }
 
-func (d *Dev) SetEnabled(enabled bool) error {
+func (d *DevPlugin) SetEnabled(enabled bool) error {
 	d.configuration.Enabled = enabled
 	d.Enabled = enabled
 	return commons.SaveConfiguration(d, d.configuration)
 }
 
-func (d *Dev) addRoot(root string) (err error) {
+func (d *DevPlugin) addRoot(root string) (err error) {
 	if root, err = filepath.Abs(root); err != nil {
 		return fmt.Errorf("error getting absolute path for %s: %w", root, err)
 	}
@@ -82,7 +81,7 @@ func (d *Dev) addRoot(root string) (err error) {
 	return d.Sync()
 }
 
-func (d *Dev) deleteRoot(root string) (err error) {
+func (d *DevPlugin) deleteRoot(root string) (err error) {
 	if root, err = filepath.Abs(root); err != nil {
 		return fmt.Errorf("error getting absolute path for %s: %w", root, err)
 	}
@@ -93,10 +92,7 @@ func (d *Dev) deleteRoot(root string) (err error) {
 	return d.Sync()
 }
 
-func (d *Dev) RunFind(cmd *cobra.Command, args []string) (err error) {
-	if flagOutput != "" {
-		os.Remove(flagOutput)
-	}
+func (d *DevPlugin) RunFind(cmd *cobra.Command, args []string) (err error) {
 	slog.Debug("Running dev find", slog.Any("args", args))
 	if flagAdd != "" {
 		return d.addRoot(flagAdd)
@@ -120,19 +116,15 @@ func (d *Dev) RunFind(cmd *cobra.Command, args []string) (err error) {
 	folder, err := chooseFolder(folders)
 
 	if err == nil {
-		content := "cd " + folder
-		if len(flagOutput) > 0 {
-			err = os.WriteFile(flagOutput, []byte(content), 0644)
-			slog.Debug("Writing output", slog.String("file", flagOutput), slog.String("content", content), slog.Any("error", err))
-		} else {
-			fmt.Println(content)
-		}
+
+		d.WriteOutput("cd " + folder)
+
 	}
 
 	return err
 }
 
-func (d *Dev) Find(words []string) []string {
+func (d *DevPlugin) Find(words []string) []string {
 	folders := make([]string, 0, 10)
 	for rootFolder, root := range d.rootsConfiguration.Roots {
 		for index := range root.Folders {
@@ -144,7 +136,7 @@ func (d *Dev) Find(words []string) []string {
 	return folders
 }
 
-func (d *Dev) Sync() (err error) {
+func (d *DevPlugin) Sync() (err error) {
 	filter := NewReaderFilter()
 	for rootFolder, root := range d.rootsConfiguration.Roots {
 		reader := NewDirReader(filter, rootFolder)
@@ -177,30 +169,31 @@ func (d *Dev) Sync() (err error) {
 	return
 }
 
-func (d *Dev) RunSync(cmd *cobra.Command, args []string) error {
+func (d *DevPlugin) RunSync(cmd *cobra.Command, args []string) error {
 	slog.Debug("Running dev sync", slog.Any("args", args))
 	return d.Sync()
 }
 
-func (d *Dev) shouldResync() bool {
+func (d *DevPlugin) shouldResync() bool {
 	return d.configuration.LastSync.Add(d.configuration.SyncInterval).Before(time.Now())
 }
 
-func (d *Dev) GetCobraCommand() *cobra.Command {
+func (d *DevPlugin) GetCobraCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  devName,
-		RunE: d.RunFind,
+		Use:   devName,
+		RunE:  d.RunFind,
+		Short: "Rapid access to your development folders",
+		Long: `This feature allows you to access your projects folder
+quickly and get information about it`,
+		Args: cobra.MinimumNArgs(1),
 	}
 	wd, err := os.Getwd()
 	if err != nil {
 		wd = "."
 	}
-	cmd.Flags().StringVarP(&flagAdd, "add", "a", "", "Add folder to roots")
-	cmd.Flags().Lookup("add").NoOptDefVal = wd
-	cmd.Flags().StringVarP(&flagDel, "delete", "d", "", "Delete folder from roots")
-	cmd.Flags().Lookup("delete").NoOptDefVal = wd
+	cmd.Flags().StringVarP(&flagAdd, "add", "a", wd, "Add folder to roots")
+	cmd.Flags().StringVarP(&flagDel, "delete", "d", wd, "Delete folder from roots")
 	cmd.Flags().BoolVarP(&flagSync, "sync", "s", false, "Sync folders")
-	cmd.Flags().StringVarP(&flagOutput, "output", "o", path.Join(os.TempDir(), metadata.AppName), "Output script for shell alias")
 
 	return cmd
 }

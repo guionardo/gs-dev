@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	outputfile "github.com/guionardo/gs-dev/internal/output_file"
 	"github.com/spf13/cobra"
 )
 
@@ -31,4 +32,6 @@ type (
 
 		GetRootCommand() *cobra.Command
 	}
+
+	PluginConstructor func(output *outputfile.OutputFile) CliPlugin
 )

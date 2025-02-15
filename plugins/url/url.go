@@ -5,10 +5,11 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/guionardo/gs-dev/internal/git"
+	outputfile "github.com/guionardo/gs-dev/internal/output_file"
 	"github.com/guionardo/gs-dev/pkg/plugins"
 	"github.com/guionardo/gs-dev/plugins/commons"
 	"github.com/spf13/cobra"
@@ -25,23 +26,25 @@ var (
 	justShow  *bool
 )
 
-func NewURL() plugins.CliPlugin {
+func Constructor(output *outputfile.OutputFile) plugins.CliPlugin {
 	return &URL{
 		BasePlugin: commons.BasePlugin{
 			PluginName:    urlName,
 			CanBeDisabled: true,
 			Enabled:       true,
+			Output:        output,
 		},
 	}
+
 }
 
 func (u *URL) RunURL(command *cobra.Command, args []string) (err error) {
 	slog.Debug("Getting URL from git project", slog.String("directory", directory), slog.Bool("justShow", *justShow))
 	var url string
 	if url, err = git.GetRemoteHttpURL(directory); err == nil {
-		fmt.Print(url)
+		fmt.Println(url)
 		if !*justShow {
-			err = openInBrowser(url)
+			err = u.openInBrowser(url)
 		}
 	}
 	return
@@ -62,7 +65,6 @@ func (u *URL) GetCobraCommand() *cobra.Command {
 		wd = awd
 	}
 	cmd.Flags().StringVarP(&directory, "directory", "d", wd, "Directory path")
-	// cmd.Flags().Lookup("directory").NoOptDefVal = wd
 
 	justShow = cmd.Flags().BoolP("just-show", "j", false, "Just show and doesn´t open in browser")
 
@@ -83,12 +85,11 @@ func checkReachableUrl(url string) error {
 	}
 }
 
-func openInBrowser(url string) (err error) {
-	if err = checkReachableUrl(url); err != nil {
-		return
+func (u *URL) openInBrowser(url string) (err error) {
+	if err = checkReachableUrl(url); err == nil {
+		command, args := urlCommand(url)
+		u.WriteOutput(fmt.Sprintf("%s %s", command, strings.Join(args, " ")))
 	}
-	command, args := urlCommand(url)
-	err = exec.Command(command, args...).Start()
 
 	return
 }

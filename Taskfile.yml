@@ -3,8 +3,13 @@ version: '3'
 tasks:
   generate:
     cmds:
-      - go get github.com/spf13/cobra/doc@v1.8.1
+      - go get github.com/spf13/cobra/doc@latest
       - go generate ./...
+
+  docs:
+    cmds:
+      - go get github.com/spf13/cobra/doc@latest
+      - go run cmd/docs.go
 
   prereq:
     cmds:

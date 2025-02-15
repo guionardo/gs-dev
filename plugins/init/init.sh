@@ -4,11 +4,11 @@ _run_gs_dev() {
   doesnt_use_output=(GS_DOESNT_USE_OUTPUT)
 
   # debug=(( "$1" == "DEBUG" ? "--debug" : ""))
-  # if [[ "$1" == "DEBUG" ]]; then
+  if [[ "$1" == "DEBUG" ]]; then
     debug="--debug"
-  # else
-    # debug=""
-  # fi
+  else
+    debug=""
+  fi
 
   shift 1
 

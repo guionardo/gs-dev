@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/guionardo/gs-dev/internal/generic"
+	outputfile "github.com/guionardo/gs-dev/internal/output_file"
 	"github.com/guionardo/gs-dev/pkg/plugins"
 )
 
@@ -12,6 +13,7 @@ type BasePlugin struct {
 	PluginName    string
 	CanBeDisabled bool
 	Enabled       bool
+	Output        *outputfile.OutputFile
 }
 
 func (b BasePlugin) String() string {
@@ -46,5 +48,11 @@ func (b BasePlugin) GetConfiguration() plugins.PluginConfiguration {
 		Name:          b.PluginName,
 		Enabled:       b.Enabled,
 		CanBeDisabled: b.CanBeDisabled,
+	}
+}
+
+func (b BasePlugin) WriteOutput(line string) {
+	if b.Output != nil {
+		b.Output.AddContent(line)
 	}
 }

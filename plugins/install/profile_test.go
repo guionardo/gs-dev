@@ -23,7 +23,7 @@ func TestNewProfileFile(t *testing.T) {
 	}
 	backups := make([]string, 0)
 	defer func() {
-		os.WriteFile(filename, content, 0644)
+		_ = os.WriteFile(filename, content, 0644)
 		for _, backup := range backups {
 			os.Remove(backup)
 		}

@@ -1,9 +1,10 @@
-package plugins
+package plugins_setup
 
 import (
 	"fmt"
 	"strings"
 
+	outputfile "github.com/guionardo/gs-dev/internal/output_file"
 	"github.com/guionardo/gs-dev/pkg/plugins"
 	"github.com/guionardo/gs-dev/plugins/commons"
 	"github.com/spf13/cobra"
@@ -13,17 +14,19 @@ type PluginSetup struct {
 	commons.BasePlugin
 }
 
-func NewPluginSetup() *PluginSetup {
+func Constructor(output *outputfile.OutputFile) plugins.CliPlugin {
 	return &PluginSetup{
 		BasePlugin: commons.BasePlugin{
 			PluginName:    "plugins",
 			CanBeDisabled: false,
 			Enabled:       true,
+			Output:        output,
 		},
 	}
+
 }
 
-func (d PluginSetup) GetConfiguration() plugins.PluginConfiguration {
+func (d *PluginSetup) GetConfiguration() plugins.PluginConfiguration {
 	return plugins.PluginConfiguration{
 		Name:          d.PluginName,
 		Enabled:       true,

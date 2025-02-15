@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/guionardo/gs-dev/internal/metadata"
+	"github.com/guionardo/gs-dev/app/build"
 	"github.com/guionardo/gs-dev/internal/shell"
 )
 
@@ -54,7 +54,8 @@ func (pf *ProfileFile) DoBackup() (err error) {
 		// Last backup has same content
 		return nil
 	}
-	if stat, err := os.Stat(pf.Path); err == nil {
+	var stat os.FileInfo
+	if stat, err = os.Stat(pf.Path); err == nil {
 		fileName := fmt.Sprintf("%s.%s.bak", pf.Path, stat.ModTime().Format("20060102150405"))
 		pf.LastBackup = fileName
 		err = os.WriteFile(fileName, currentProfile, 0644)
@@ -106,7 +107,7 @@ func (pf *ProfileFile) SetFeature(command string, enable bool) {
 		pf.Lines[pf.MarkerLines[len(pf.MarkerLines)-1]] = commandLine
 	} else {
 		// Add a new line
-		pf.Lines = append(pf.Lines, fmt.Sprintf("# %s set on %v", metadata.AppDescription, time.Now().Format(time.DateTime)), commandLine)
+		pf.Lines = append(pf.Lines, fmt.Sprintf("# %s set on %v", build.AppDescription, time.Now().Format(time.DateTime)), commandLine)
 	}
 
 }
