@@ -7,7 +7,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/guionardo/gs-dev/internal/metadata"
+	"github.com/guionardo/gs-dev/app/build"
 	"github.com/guionardo/gs-dev/pkg/plugins"
 	"github.com/guionardo/gs-dev/plugins/commons"
 	"github.com/spf13/cobra"
@@ -65,11 +65,11 @@ func RunInit() error {
 	// my_array=("apple" "banana" "cherry" "date")
 
 	doesntUseOutput := strings.Join([]string{`"url"`, `"init"`}, " ")
-	output := path.Join(os.TempDir(), metadata.AppName)
+	output := path.Join(os.TempDir(), build.AppName)
 	for key, value := range map[string]string{
 		"GS_DEV":               executable,
 		"GS_OUTPUT":            output,
-		"GS_TOOL":              fmt.Sprintf("%s %s", metadata.AppName, metadata.Version),
+		"GS_TOOL":              fmt.Sprintf("%s %s", build.AppName, build.Version),
 		"GS_DOESNT_USE_OUTPUT": doesntUseOutput,
 	} {
 		initScript = strings.ReplaceAll(initScript, key, value)

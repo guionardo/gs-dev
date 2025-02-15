@@ -3,6 +3,7 @@ package manager
 import (
 	"log/slog"
 
+	"github.com/guionardo/gs-dev/app/build"
 	"github.com/guionardo/gs-dev/internal/metadata"
 	"github.com/guionardo/gs-dev/pkg/plugins"
 	"github.com/spf13/cobra"
@@ -58,7 +59,7 @@ func (p *Manager) GetPluginNames() []string {
 
 func (p *Manager) GetPlugin(name string) (plugins.CliPlugin, bool) {
 	if plugin, ok := p.plugins[name]; ok {
-		return plugin.(plugins.CliPlugin), ok
+		return plugin, ok
 	}
 	return nil, false
 }
@@ -77,13 +78,16 @@ func (p *Manager) GetRootCommand() *cobra.Command {
 		}
 	}
 
-	rootCmd.AddCommand(&cobra.Command{
+	versionCmd := &cobra.Command{
 		Use:   "version",
 		Short: "Application version",
 		Run: func(cmd *cobra.Command, args []string) {
-			cmd.Printf("%s %s\n", metadata.AppName, metadata.Version)
+			cmd.Printf("%s %s\n", build.AppName, build.Version)
+			cmd.Printf("Build info %s\n", build.BuildInfo)
 		},
-	})
+	}
+
+	rootCmd.AddCommand(versionCmd)
 	p.rootCmd = rootCmd
 	return p.rootCmd
 }

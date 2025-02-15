@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/guionardo/gs-dev/internal/metadata"
+	"github.com/guionardo/gs-dev/app/build"
 	"github.com/guionardo/gs-dev/pkg/plugins"
 	"github.com/guionardo/gs-dev/plugins/commons"
 
@@ -27,26 +27,28 @@ func NewInstallShell() *InstallShell {
 	}
 }
 
-func (i *InstallShell) Setup(manager plugins.PluginsManager, configurationFolder string) (err error) {
+func (i *InstallShell) Setup(manager plugins.PluginsManager, configurationFolder string) error {
 	i.BaseSetup(manager)
 
 	// Source command
 	//	source <(./go-dev init)
-	if executableName, err := os.Executable(); err == nil {
-		if strings.Contains(executableName, "__debug_bin") {
-			// Running from vscode
-			err = fmt.Errorf("bad executable name %s", executableName)
-		} else {
-			i.sourceCommand = fmt.Sprintf("source <(%s init)", executableName)
-		}
-	}
+	executableName, err := os.Executable()
 
-	return
+	if err != nil {
+		return err
+	}
+	if strings.Contains(executableName, "__debug_bin") {
+		// Running from vscode
+		return fmt.Errorf("bad executable name %s", executableName)
+	}
+	i.sourceCommand = fmt.Sprintf("source <(%s init)", executableName)
+
+	return nil
 }
 
 func (i InstallShell) RunInstall(cmd *cobra.Command) error {
 	//	source <(./gs-dev init)
-	profile, err := NewProfileFile(metadata.AppName)
+	profile, err := NewProfileFile(build.AppName)
 	if err != nil {
 		return err
 	}
@@ -63,7 +65,7 @@ func (i InstallShell) RunInstall(cmd *cobra.Command) error {
 }
 
 func (i InstallShell) RunUninstall(cmd *cobra.Command) error {
-	profile, err := NewProfileFile(metadata.AppName)
+	profile, err := NewProfileFile(build.AppName)
 	if err != nil {
 		return err
 	}
@@ -84,7 +86,7 @@ func (i InstallShell) Run(cmd *cobra.Command, args []string) error {
 		return err
 	} else {
 		if i.sourceCommand == "" {
-			return fmt.Errorf("cannot [un]install %s when running on vscode", metadata.AppName)
+			return fmt.Errorf("cannot [un]install %s when running on vscode", build.AppName)
 		}
 		if uninstall {
 			return i.RunUninstall(cmd)

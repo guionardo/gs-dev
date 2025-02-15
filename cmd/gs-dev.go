@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/guionardo/gs-dev/app/build"
 	"github.com/guionardo/gs-dev/internal/config"
-	"github.com/guionardo/gs-dev/internal/metadata"
 
 	"github.com/guionardo/gs-dev/plugins/dev"
 	initshell "github.com/guionardo/gs-dev/plugins/init"
@@ -43,9 +43,14 @@ func preRunArgs() ([]string, string) {
 func main() {
 	args, _ := preRunArgs()
 	setupPlugins()
-	slog.Debug("Starting gs-dev", slog.String("version", metadata.Version))
+	slog.Debug("Starting gs-dev", slog.String("version", build.Version))
 
-	manager.Plugins.Setup(config.GetConfigDir())
+	err := manager.Plugins.Setup(config.GetConfigDir())
+	if err != nil {
+		slog.Error("Error setting up plugins", slog.Any("error", err))
+		os.Exit(1)
+	}
+
 	rootCmd := manager.Plugins.GetRootCommand()
 	if cmd, _, err := rootCmd.Find(args); err != nil || cmd == nil {
 		args = append([]string{"dev"}, args...)
