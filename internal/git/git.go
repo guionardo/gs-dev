@@ -2,11 +2,10 @@ package git
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
-	"os/exec"
 	"path"
 	"path/filepath"
-	"strings"
 )
 
 func GetRemoteHttpURL(folderName string) (string, error) {
@@ -15,19 +14,18 @@ func GetRemoteHttpURL(folderName string) (string, error) {
 		return "", err
 	}
 	// Check if folder has a .git subfolder
-	gitFolder := path.Join(folderName, ".git")
-	if _, err := os.Stat(gitFolder); err != nil {
-		return "", fmt.Errorf("folder %s is not a git repository", folderName)
-	}
-	// Run git config --get remote.origin.url
-	cmd := exec.Command("git", "config", "--get", "remote.origin.url")
-	cmd.Dir, _ = filepath.Abs(folderName)
-	out, err := cmd.Output()
+	gitFolder, err := getRepositoryRoot(folderName)
 	if err != nil {
-		return "", fmt.Errorf("current repository has no remote origin - %v", err)
+		return "", err
 	}
-	output := strings.ReplaceAll(strings.SplitN(string(out), "\n", 1)[0], "\n", "")
-	return getHttpUrl(output)
+	gitConfigFile := path.Join(gitFolder, ".git", "config")
+	gitConfig, err := NewGitConfig(gitConfigFile)
+	if err != nil {
+		return "", fmt.Errorf("fail reading git config file - %v", err)
+	}
+
+	return getHttpUrl(gitConfig.Remotes[0].URL)
+
 }
 
 func getHttpUrl(url string) (string, error) {
@@ -36,4 +34,30 @@ func getHttpUrl(url string) (string, error) {
 		return "", fmt.Errorf("invalid git url: %s", url)
 	}
 	return gu.GetURL(), nil
+}
+
+func getRepositoryRoot(folderName string) (root string, err error) {
+	root = folderName
+	maxDeep := 2
+	level := 0
+	var stat os.FileInfo
+	for level < maxDeep {
+		stat, err = os.Stat(path.Join(root, ".git"))
+		if err == nil && stat.IsDir() {
+			if stat, err = os.Stat(path.Join(root, ".git", "config")); err != nil || stat.IsDir() {
+				slog.Debug("repository doesn´t have a .git/config file", slog.String("folder", root))
+				err = fmt.Errorf("repository root doesn´t have a .git/config file - %s", root)
+				return "", err
+			}
+			if level > 0 {
+				slog.Debug("repository root found on parent folder", slog.String("folder", root))
+			}
+			return
+		}
+		level++
+		root = path.Dir(root)
+	}
+	err = fmt.Errorf("repository root not found for %s", folderName)
+	return
+
 }

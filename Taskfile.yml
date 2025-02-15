@@ -3,8 +3,13 @@ version: '3'
 tasks:
   generate:
     cmds:
-      - go get github.com/spf13/cobra/doc@v1.7.0
+      - go get github.com/spf13/cobra/doc@latest
       - go generate ./...
+
+  docs:
+    cmds:
+      - go get github.com/spf13/cobra/doc@latest
+      - go run cmd/docs.go
 
   prereq:
     cmds:
@@ -12,3 +17,8 @@ tasks:
       - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.54.1
       - go install github.com/fzipp/gocyclo/cmd/gocyclo@latest
       - go install golang.org/x/tools/cmd/goimports@latest
+
+  install:
+    cmds:
+      - go test ./...
+      - go install ./cmd/gs-dev.go
