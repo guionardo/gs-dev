@@ -94,10 +94,10 @@ func (d *DevPlugin) deleteRoot(root string) (err error) {
 
 func (d *DevPlugin) RunFind(cmd *cobra.Command, args []string) (err error) {
 	slog.Debug("Running dev find", slog.Any("args", args))
-	if flagAdd != "" {
+	if cmd.Flags().Changed("add") {
 		return d.addRoot(flagAdd)
 	}
-	if flagDel != "" {
+	if cmd.Flags().Changed("delete") {
 		return d.deleteRoot(flagDel)
 	}
 	if flagSync {
@@ -116,9 +116,7 @@ func (d *DevPlugin) RunFind(cmd *cobra.Command, args []string) (err error) {
 	folder, err := chooseFolder(folders)
 
 	if err == nil {
-
 		d.WriteOutput("cd " + folder)
-
 	}
 
 	return err
