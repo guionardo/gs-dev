@@ -1,9 +1,7 @@
 package build
 
 import (
-	"errors"
-	"runtime/debug"
-
+	"github.com/guionardo/gs-dev/app/build"
 	outputfile "github.com/guionardo/gs-dev/internal/output_file"
 	"github.com/guionardo/gs-dev/pkg/plugins"
 	"github.com/guionardo/gs-dev/plugins/commons"
@@ -28,16 +26,8 @@ func Constructor(output *outputfile.OutputFile) plugins.CliPlugin {
 }
 
 func (b *BuildInfoPlugin) RunShowBuild(cmd *cobra.Command, args []string) error {
-	buildInfo, ok := debug.ReadBuildInfo()
-	if !ok {
-		return errors.New("unable to determine version information")
-	}
-
-	if buildInfo.Main.Version != "" {
-		cmd.Printf("Version: %s\n", buildInfo.Main.Version)
-	} else {
-		cmd.Println("Version: unknown")
-	}
+	cmd.Printf("Version: %s\n", build.Version)
+	cmd.Printf("Build Info: %s\n", build.BuildInfo)
 	return nil
 }
 

@@ -26,7 +26,7 @@ _gsdev_treat_output() {
     return
   fi
   source "GS_OUTPUT"
-  rm --force "GS_OUTPUT"
+  rm "GS_OUTPUT"
   stty sane
 }
 
@@ -35,7 +35,7 @@ dev() {
 }
 
 fav() {
-  _run_gs_dev fav
+  _run_gs_dev NODEBUG fav $@
 }
 
 echo "GS_TOOL is ready to use (dev, fav)"
