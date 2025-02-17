@@ -34,5 +34,8 @@ dev() {
   _run_gs_dev NODEBUG $@
 }
 
+fav() {
+  _run_gs_dev fav
+}
 
-echo "GS_TOOL is ready to use (dev)"
+echo "GS_TOOL is ready to use (dev, fav)"

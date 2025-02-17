@@ -10,9 +10,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func setupPlugins() {
-	manager.Plugins.Register()
-}
 func GetRootCmd(args []string, plugins ...plugins.CliPlugin) *cobra.Command {
 	manager.Plugins.Register(plugins...)
 

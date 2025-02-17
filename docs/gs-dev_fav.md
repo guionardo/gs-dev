@@ -1,16 +1,15 @@
-## gs-dev install
+## gs-dev fav
 
-Install bindings on your shell profile
+Rapid access to your last choosen folders
 
 ```
-gs-dev install [flags]
+gs-dev fav [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help        help for install
-  -u, --uninstall   Uninstall bindings
+  -h, --help   help for fav
 ```
 
 ### SEE ALSO

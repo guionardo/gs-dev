@@ -6,7 +6,6 @@ import (
 	"path"
 
 	"github.com/guionardo/gs-dev/app/build"
-	"github.com/guionardo/gs-dev/internal/metadata"
 	outputfile "github.com/guionardo/gs-dev/internal/output_file"
 	"github.com/guionardo/gs-dev/pkg/plugins"
 	"github.com/spf13/cobra"
@@ -82,14 +81,14 @@ func (p *Manager) PostRun(cmd *cobra.Command, args []string) error {
 
 func (p *Manager) GetRootCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
-		Use:                metadata.AppName,
-		Short:              metadata.ShortDescription,
-		Long:               metadata.Description,
+		Use:                build.AppName,
+		Short:              build.ShortDescription,
+		Long:               build.AppDescription,
 		PersistentPreRunE:  p.PreRun,
 		PersistentPostRunE: p.PostRun,
 	}
 	rootCmd.Flags().Bool("debug", false, "Enable debug mode")
-	rootCmd.Flags().StringVarP(&flagOutput, "output", "o", path.Join(os.TempDir(), metadata.AppName), "Output script for shell alias")
+	rootCmd.Flags().StringVarP(&flagOutput, "output", "o", path.Join(os.TempDir(), build.AppName), "Output script for shell alias")
 	for index := range p.plugins {
 		if !p.plugins[index].IsEnabled() {
 			continue

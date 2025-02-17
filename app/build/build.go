@@ -1,31 +1,13 @@
 package build
 
-import (
-	"runtime/debug"
-)
-
 const AppName = "gs-dev"
-const AppDescription = "Go development tools"
+const AppDescription = `Guiosoft Development Assistant is a tool for helping
+the developer in your tasks.`
+const ShortDescription = "Guiosoft Development Assistant"
 
 const DevVersion = "develop"
 const unknown = "unknown"
 
+// Vars below are defined in build time by the .github/scripts/build.sh script
 var Version = DevVersion
 var BuildInfo = unknown
-
-func init() {
-	if Version == DevVersion {
-		return
-	}
-	// https://jerrynsh.com/3-easy-ways-to-add-version-flag-in-go
-	buildInfo, ok := debug.ReadBuildInfo()
-	if !ok {
-		Version = DevVersion
-		return
-	}
-
-	if buildInfo.Main.Version != "" {
-		Version = buildInfo.Main.Version
-		return
-	}
-}

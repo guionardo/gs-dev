@@ -1,16 +1,15 @@
-## gs-dev install
+## gs-dev build
 
-Install bindings on your shell profile
+Show build info
 
 ```
-gs-dev install [flags]
+gs-dev build [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help        help for install
-  -u, --uninstall   Uninstall bindings
+  -h, --help   help for build
 ```
 
 ### SEE ALSO

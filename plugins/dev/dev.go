@@ -58,6 +58,10 @@ func (d *DevPlugin) Setup(manager plugins.PluginsManager, configurationFolder st
 		d.rootsConfiguration.Roots = make(map[string]Root)
 	}
 
+	if d.configuration.LastChoosen == nil {
+		d.configuration.LastChoosen = make(LastChoosenFolders)
+	}
+
 	return err
 }
 
@@ -116,6 +120,7 @@ func (d *DevPlugin) RunFind(cmd *cobra.Command, args []string) (err error) {
 	folder, err := chooseFolder(folders)
 
 	if err == nil {
+		d.ChoosedFolder(folder)
 		d.WriteOutput("cd " + folder)
 	}
 
@@ -183,7 +188,6 @@ func (d *DevPlugin) GetCobraCommand() *cobra.Command {
 		Short: "Rapid access to your development folders",
 		Long: `This feature allows you to access your projects folder
 quickly and get information about it`,
-		Args: cobra.MinimumNArgs(1),
 	}
 	wd, err := os.Getwd()
 	if err != nil {
