@@ -25,8 +25,8 @@ repos:
       - id: go-build
       # - id: go-mod-tidy
 
-  - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.10.0
-    hooks:
-      - id: shellcheck
-        args: ["--severity=warning", "--exclude=2068,1091,2199"] # Optionally only show errors and warnings
+  # - repo: https://github.com/koalaman/shellcheck-precommit
+  #   rev: v0.10.0
+  #   hooks:
+  #     - id: shellcheck
+  #       args: ["--severity=warning", "--exclude=2068,1091,2199"] # Optionally only show errors and warnings

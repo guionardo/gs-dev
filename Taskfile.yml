@@ -1,10 +1,10 @@
 version: '3'
 
 tasks:
-  generate:
-    cmds:
-      - go get github.com/spf13/cobra/doc@latest
-      - go generate ./...
+  # generate:
+  #   cmds:
+  #     - go get github.com/spf13/cobra/doc@latest
+  #     - go generate ./...
 
   docs:
     cmds:
@@ -21,4 +21,4 @@ tasks:
   install:
     cmds:
       - go test ./...
-      - go install ./cmd/gs-dev.go
+      - .github/scripts/build.sh install

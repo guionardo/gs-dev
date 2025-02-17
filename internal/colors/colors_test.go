@@ -2,7 +2,7 @@ package colors
 
 import "testing"
 
-func TestNormal(t *testing.T) {
+func TestColors(t *testing.T) {
 	tests := []struct {
 		name string
 		fnc  func(string, ...interface{})
