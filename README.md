@@ -2,7 +2,7 @@
 
 Development assistant
 
-[![CodeQL](https://github.com/guionardo/gs-dev/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/guionardo/gs-dev/actions/workflows/codeql-analysis.yml)
+[![CodeQL](https://github.com/guionardo/gs-dev/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/guionardo/gs-dev/actions/workflows/github-code-scanning/codeql)
 [![Go Report Card](https://goreportcard.com/badge/github.com/guionardo/gs-dev?style=flat-square)](https://goreportcard.com/report/github.com/guionardo/gs-dev)
 [![Go Release](https://github.com/guionardo/gs-dev/actions/workflows/release.yml/badge.svg)](https://github.com/guionardo/gs-dev/actions/workflows/release.yml)
 
