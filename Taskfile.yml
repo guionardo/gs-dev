@@ -9,7 +9,7 @@ tasks:
   docs:
     cmds:
       - go get github.com/spf13/cobra/doc@latest
-      - go run cmd/docs.go
+      - go run cmd/docs/docs.go --docs=./docs
 
   prereq:
     cmds:

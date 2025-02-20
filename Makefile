@@ -46,3 +46,7 @@ build: ## Build the application
 install: build ## Build and install the application
 	@mv bin/gs-dev $(GOPATH)/bin
 	@echo "Application installed successfully -> $(GOPATH)/bin/gs-dev"
+
+.PHONY: release
+release: ## Generate new release on github
+	@python3 .github/scripts/new_release.py

@@ -3,6 +3,7 @@
 package main
 
 import (
+	"flag"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -15,12 +16,15 @@ import (
 )
 
 func main() {
+	var docsFolder string
+	flag.StringVar(&docsFolder, "docs", "../../docs", "docs folder")
+	flag.Parse()
 	slog.SetLogLoggerLevel(slog.LevelDebug)
 	output, err := outputfile.NewOutputFile("")
 	rootCmd := cmd.GetRootCmd([]string{}, plugins_register.GetRegisteredPlugins(output)...)
-	docsFolder, err := filepath.Abs("../docs")
+	docsFolder, err = filepath.Abs(docsFolder)
 	if err != nil {
-		slog.Error("Failed to get ../docs folder", slog.Any("error", err))
+		slog.Error("Failed to get docs folder", slog.String("folder", docsFolder), slog.Any("error", err))
 		return
 	}
 	if err = os.RemoveAll(docsFolder); err != nil {
@@ -31,7 +35,7 @@ func main() {
 		slog.Error("Failed to create folder", slog.String("folder", docsFolder), slog.Any("error", err))
 		return
 	}
-	if err = doc.GenMarkdownTree(rootCmd, "../docs"); err != nil {
+	if err = doc.GenMarkdownTree(rootCmd, docsFolder); err != nil {
 		slog.Error("Failed to generate documentation", slog.String("folder", docsFolder), slog.Any("error", err))
 		return
 	}

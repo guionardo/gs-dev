@@ -32,13 +32,11 @@ func (b *BuildInfoPlugin) RunShowBuild(cmd *cobra.Command, args []string) error 
 }
 
 func (b *BuildInfoPlugin) GetCobraCommand() *cobra.Command {
-	cmd := &cobra.Command{
+	return &cobra.Command{
 		Use:   buildName,
 		RunE:  b.RunShowBuild,
-		Short: "Show build info",
+		Short: "Show build info (version and build environment)",
 	}
-
-	return cmd
 }
 
 func (b *BuildInfoPlugin) Setup(manager plugins.PluginsManager, configurationFolder string) (err error) {
