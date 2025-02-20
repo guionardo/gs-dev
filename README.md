@@ -14,3 +14,11 @@ Development assistant
 ## Features
 
 Check the [documentation](docs/gs-dev.md)
+
+## Installing
+
+Check the release artifacts on this repository or run the command below:
+
+```bash
+go install github.com/guionardo/gs-dev/cmd@latest
+```
