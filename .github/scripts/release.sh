@@ -35,7 +35,7 @@ for platform in "${platforms[@]}"; do
     env GOOS=$GOOS GOARCH=$GOARCH go build \
         -ldflags="-X 'github.com/guionardo/gs-dev/app/build.BuildInfo=$BUILD_INFO' -X 'github.com/guionardo/gs-dev/app/build.Version=$version'" \
         -o release/$output_name \
-        cmd/gs-dev.go
+        cmd/gs-dev/gs-dev.go
 
     if [ $? -ne 0 ]; then
         echo 'An error has occurred! Aborting.'
