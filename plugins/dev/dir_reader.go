@@ -1,13 +1,16 @@
 package dev
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"log/slog"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 
+	"github.com/guionardo/gs-dev/pkg/tools/files"
 	"gopkg.in/yaml.v3"
 )
 
@@ -28,6 +31,7 @@ const (
 	ReasonGitRepository = "git repository"
 	ReasonProjectFolder = "project folder"
 	ReasonPrefix        = "prefix"
+	DefaultMaxLevel     = 3
 )
 
 func NewDirReader(filter ReaderFilter, sources ...string) *DirReader {
@@ -39,6 +43,7 @@ func NewDirReader(filter ReaderFilter, sources ...string) *DirReader {
 			}
 		}
 	}
+
 	return &DirReader{
 		sources: validSources,
 		filter:  filter,
@@ -53,29 +58,35 @@ func NewReaderFilter() ReaderFilter {
 					return false, ReasonPrefix
 				}
 			}
+
 			return true, ""
 		},
 		func(folder string) (bool, string) {
 			if stat, err := os.Stat(path.Join(folder, ".git")); err == nil && stat.IsDir() {
 				return false, ReasonGitRepository
 			}
+
 			return true, ""
 		},
 		func(folder string) (bool, string) {
-			if _, found := findFirst(folder, "pyproject.toml", "requirements.txt"); found {
+			if files.FindFirst(folder, "pyproject.toml", "requirements.txt") != "" {
 				return false, fmt.Sprintf("%s %s", ReasonProjectFolder, "python")
 			}
-			if _, found := findFirst(folder, "go.mod"); found {
+
+			if files.FindFirst(folder, "go.mod") != "" {
 				return false, fmt.Sprintf("%s %s", ReasonProjectFolder, "golang")
 			}
-			if _, found := findFirst(folder, "package.json"); found {
+
+			if files.FindFirst(folder, "package.json") != "" {
 				return false, fmt.Sprintf("%s %s", ReasonProjectFolder, "node")
 			}
+
 			return true, ""
 		},
 	}
+
 	return ReaderFilter{
-		maxLevel:         3,
+		maxLevel:         DefaultMaxLevel,
 		folderValidators: validators,
 	}
 }
@@ -91,6 +102,7 @@ func (dr *DirReader) Folders() func(func(string) bool) {
 		}
 	}
 }
+
 func (dr *DirReader) folders(root string, level int) func(func(string) bool) {
 	return func(yield func(string) bool) {
 		// Verify gs-dev file
@@ -98,9 +110,11 @@ func (dr *DirReader) folders(root string, level int) func(func(string) bool) {
 		if err := getGsDev(root, &gsDev); err == nil && gsDev.Ignore {
 			return
 		}
+
 		if !yield(root) {
 			return
 		}
+
 		if gsDev.IgnoreSubfolders {
 			return
 		}
@@ -118,6 +132,7 @@ func (dr *DirReader) folders(root string, level int) func(func(string) bool) {
 				break
 			}
 		}
+
 		if !ok {
 			slog.Debug("ignored sub folders", slog.String("folder", root), slog.String("reason", reason))
 			return
@@ -126,9 +141,16 @@ func (dr *DirReader) folders(root string, level int) func(func(string) bool) {
 		// Verify subfolders
 		sf, err := os.ReadDir(root)
 		if err != nil {
-			slog.Error("failed to read subfolders", slog.String("folder", root), slog.Any("error", err))
+			// check if the error is a fs.PathError
+			if errors.Is(err, fs.ErrPermission) {
+				slog.Debug("failed to read subfolders", slog.String("folder", root), slog.Any("error", err))
+			} else {
+				slog.Error("failed to read subfolders", slog.String("folder", root), slog.Any("error", err))
+			}
+
 			return
 		}
+
 		for i := range sf {
 			if sf[i].IsDir() {
 				for subFolder := range dr.folders(path.Join(root, sf[i].Name()), level+1) {
@@ -138,43 +160,23 @@ func (dr *DirReader) folders(root string, level int) func(func(string) bool) {
 				}
 			}
 		}
-
 	}
 }
 
 func getGsDev(root string, gsDev *LocalConfig) error {
-	found, gsDevFile := findFile(root, ".gsdev.yaml", ".gsdev.yml", ".gs_dev.yaml", ".gs_dev.yml", ".gs-dev.yaml", ".gs-dev.yml", ".gsdev", ".gs-dev", ".gs_dev")
-	if !found {
+	gsDevFile := files.FindFirst(root, ".gsdev.yaml", ".gsdev.yml", ".gs_dev.yaml", ".gs_dev.yml", ".gs-dev.yaml", ".gs-dev.yml", ".gsdev", ".gs-dev", ".gs_dev")
+	if gsDevFile == "" {
 		return os.ErrNotExist
 	}
-	content, err := os.ReadFile(gsDevFile)
+
+	content, err := os.ReadFile(filepath.Clean(gsDevFile))
 	if err != nil {
-		return fmt.Errorf("error reading gs-dev file: %s - %v", gsDevFile, err)
+		return fmt.Errorf("error reading gs-dev file: %s - %w", gsDevFile, err)
 	}
 
 	if err = yaml.Unmarshal(content, gsDev); err != nil {
-		return fmt.Errorf("error unmarshalling gs-dev file: %s - %v", gsDevFile, err)
+		return fmt.Errorf("error unmarshalling gs-dev file: %s - %w", gsDevFile, err)
 	}
+
 	return nil
-}
-
-func findFile(folder string, files ...string) (found bool, fileName string) {
-	for i := range files {
-		if matches, err := filepath.Glob(path.Join(folder, files[i])); err == nil && len(matches) > 0 {
-			return true, matches[0]
-		}
-	}
-	return
-}
-
-func findFirst(root string, names ...string) (fileName string, ok bool) {
-	for i := range names {
-		matches, err := filepath.Glob(path.Join(root, names[i]))
-		if err == nil && len(matches) > 0 {
-			ok = true
-			fileName = matches[0]
-			break
-		}
-	}
-	return
 }

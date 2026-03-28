@@ -13,22 +13,20 @@ type (
 	}
 	Configuration struct {
 		commons.PluginConfiguration
+
 		LastSync        time.Time      `yaml:"last_sync"`
 		SyncInterval    time.Duration  `yaml:"sync_interval"`
 		DefaultMaxDepth int            `yaml:"default_max_depth"`
-		LastChoosen     map[string]int `yaml:"last_choosen"`
+		LastChosen      map[string]int `yaml:"last_chosen"`
+		MostChosenCount int            `yaml:"most_chosen_count" default:"5"`
 	}
 	RootsConfiguration struct {
 		Roots map[string]Root `yaml:"roots"`
 	}
-	LocalConfig struct {
-		Ignore           bool   `yaml:"ignore"`
-		IgnoreSubfolders bool   `yaml:"ignore_subfolders"`
-		Description      string `yaml:"description"`
-	}
-	LastChoosenFolders map[string]int
+
+	LostChosenFolders map[string]int
 )
 
-func (c *Configuration) IncrementChoosed(folder string) {
-	c.LastChoosen[folder]++
+func (c *Configuration) IncrementChosen(folder string) {
+	c.LastChosen[folder]++
 }

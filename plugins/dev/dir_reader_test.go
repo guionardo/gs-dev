@@ -9,19 +9,20 @@ import (
 	"strings"
 	"testing"
 
-	pathtools "github.com/guionardo/gs-dev/internal/path_tools"
+	pathtools "github.com/guionardo/go/path_tools"
 )
-
-func TestMain(m *testing.M) {
-	slog.SetLogLoggerLevel(slog.LevelDebug)
-	exitVal := m.Run()
-
-	os.Exit(exitVal)
-}
 
 type fileMock struct {
 	path    string
 	content string
+}
+
+func TestMain(m *testing.M) {
+	slog.SetLogLoggerLevel(slog.LevelDebug)
+
+	exitVal := m.Run()
+
+	os.Exit(exitVal)
 }
 
 func createMockFiles(root string) error {
@@ -41,26 +42,30 @@ func createMockFiles(root string) error {
 		words := strings.Split(mock.path, "/")
 		baseDir := path.Join(words[0 : len(words)-1]...)
 		dir := path.Join(root, baseDir)
+
 		var err error
 		if err = pathtools.CreatePath(dir); err != nil {
 			return err
 		}
 
 		fileName := path.Join(dir, words[len(words)-1])
-		if err = os.WriteFile(fileName, []byte(mock.content), 0644); err != nil {
-			return fmt.Errorf("failed to create file %s -> %v", fileName, err)
+		if err = os.WriteFile(fileName, []byte(mock.content), 0600); err != nil {
+			return fmt.Errorf("failed to create file %s -> %w", fileName, err)
 		}
 	}
+
 	return nil
 }
 func TestNewDirReader(t *testing.T) {
+	t.Parallel()
+
 	tmpDir, _ := filepath.Abs("./TestNewDirReader")
 	t.Logf("Temporary dir %s", tmpDir)
 
-	os.RemoveAll(tmpDir)
+	_ = os.RemoveAll(tmpDir)
 
 	defer func() {
-		os.RemoveAll(tmpDir)
+		_ = os.RemoveAll(tmpDir)
 		t.Logf("Removed temporary dir %s", tmpDir)
 	}()
 
@@ -68,6 +73,7 @@ func TestNewDirReader(t *testing.T) {
 		t.Errorf("%v", err)
 		return
 	}
+
 	readerFilter := NewReaderFilter()
 	dirReader := NewDirReader(readerFilter, tmpDir)
 
@@ -82,6 +88,7 @@ func TestNewDirReader(t *testing.T) {
 		"dev2/subdev/repository_git":     0,
 		"dev2/py_2_1":                    0,
 	}
+
 	for folder := range dirReader.Folders() {
 		folder = strings.TrimPrefix(strings.TrimPrefix(folder, tmpDir), "/")
 		if _, ok := expected[folder]; !ok {
@@ -90,8 +97,8 @@ func TestNewDirReader(t *testing.T) {
 			delete(expected, folder)
 		}
 	}
+
 	for folder := range expected {
 		t.Errorf("missing folder   -> %s", folder)
 	}
-
 }

@@ -1,7 +1,8 @@
 package plugins
 
 import (
-	outputfile "github.com/guionardo/gs-dev/internal/output_file"
+	"iter"
+
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +21,7 @@ type (
 		SetEnabled(enabled bool) error
 
 		GetCobraCommand() *cobra.Command
+		HasAlias() bool // if the plugin has an alias, it will be added to the init script
 	}
 
 	PluginsManager interface {
@@ -29,9 +31,10 @@ type (
 
 		GetPluginNames() []string
 		GetPlugin(name string) (CliPlugin, bool)
+		GetPlugins() iter.Seq[CliPlugin]
 
 		GetRootCommand() *cobra.Command
 	}
 
-	PluginConstructor func(output *outputfile.OutputFile) CliPlugin
+	PluginConstructor func() CliPlugin
 )

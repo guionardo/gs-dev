@@ -2,7 +2,6 @@ package build
 
 import (
 	"github.com/guionardo/gs-dev/app/build"
-	outputfile "github.com/guionardo/gs-dev/internal/output_file"
 	"github.com/guionardo/gs-dev/pkg/plugins"
 	"github.com/guionardo/gs-dev/plugins/commons"
 	"github.com/spf13/cobra"
@@ -14,13 +13,12 @@ type BuildInfoPlugin struct {
 
 const buildName = "build"
 
-func Constructor(output *outputfile.OutputFile) plugins.CliPlugin {
+func Constructor() plugins.CliPlugin {
 	return &BuildInfoPlugin{
 		BasePlugin: commons.BasePlugin{
 			PluginName:    buildName,
 			CanBeDisabled: false,
 			Enabled:       true,
-			Output:        output,
 		},
 	}
 }
@@ -28,6 +26,7 @@ func Constructor(output *outputfile.OutputFile) plugins.CliPlugin {
 func (b *BuildInfoPlugin) RunShowBuild(cmd *cobra.Command, args []string) error {
 	cmd.Printf("Version: %s\n", build.Version)
 	cmd.Printf("Build Info: %s\n", build.BuildInfo)
+
 	return nil
 }
 

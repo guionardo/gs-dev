@@ -1,19 +1,18 @@
 package colors
 
-import "testing"
+import (
+	"testing"
 
-func TestColors(t *testing.T) {
-	tests := []struct {
-		name string
-		fnc  func(string, ...interface{})
-	}{
-		{"Normal", Normal},
-		{"Red", Red},
-		{"Green", Green},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.fnc("%s: %s - %d", tt.name, "test", 1)
-		})
-	}
+	"github.com/fatih/color"
+	"github.com/stretchr/testify/require"
+)
+
+func TestParse(t *testing.T) {
+	t.Parallel()
+
+	phrase := "{warning}test{normal} Resto da frase"
+	color.NoColor = false
+	parsedPhrase := Parse(phrase)
+	t.Logf("Parsed phrase:\n%s", parsedPhrase)
+	require.Equal(t, "\x1b[43;30mtest\x1b[0m\x1b[37;40m Resto da frase\x1b[0m", parsedPhrase)
 }

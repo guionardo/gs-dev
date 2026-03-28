@@ -22,3 +22,8 @@ tasks:
     cmds:
       - go test ./...
       - .github/scripts/build.sh install
+
+  lint:
+    cmds:
+      - golangci-lint run --fix
+

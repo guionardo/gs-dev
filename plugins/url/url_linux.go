@@ -8,6 +8,8 @@ func urlCommand(url string) (command string, args []string) {
 	} else {
 		command = "xdg-open"
 	}
+
 	args = []string{url}
+
 	return
 }

@@ -5,9 +5,13 @@ import (
 	"path"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetRemoteHttpURL(t *testing.T) {
+	t.Parallel()
+
 	thisFolderWithRepo, _ := os.Getwd()
 	thisFolderWithRepo = path.Join(thisFolderWithRepo, "..", "..")
 	t.Logf("thisFolderWithRepo: %s", thisFolderWithRepo)
@@ -33,15 +37,14 @@ func TestGetRemoteHttpURL(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
 			got, err := GetRemoteHttpURL(tt.folder)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetRemoteHttpURL() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			if tt.wantErr {
+				require.Error(t, err, "GetRemoteHttpURL() should return error")
 			}
-			if got != tt.want {
-				t.Errorf("GetRemoteHttpURL() = %v, want %v", got, tt.want)
-			}
+
+			require.Equal(t, tt.want, got, "GetRemoteHttpURL() should return the correct URL")
 		})
 	}
 }

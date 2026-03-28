@@ -43,10 +43,14 @@ build: ## Build the application
 	@.github/scripts/build.sh
 
 .PHONY: install
-install: build ## Build and install the application
-	@mv bin/gs-dev $(GOPATH)/bin
-	@echo "Application installed successfully -> $(GOPATH)/bin/gs-dev"
-
+install: ## Build and install the application
+	@.github/scripts/build.sh install
+	
 .PHONY: release
 release: ## Generate new release on github
 	@python3 .github/scripts/new_release.py
+
+.PHONY: docs
+docs: ## Generate documentation for the application
+	@go get github.com/spf13/cobra/doc@latest
+	@go run cmd/docs/docs.go --docs=./docs

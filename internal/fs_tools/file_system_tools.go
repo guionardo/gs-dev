@@ -1,0 +1,65 @@
+package fs_tools
+
+import (
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+
+	pathtools "github.com/guionardo/go/path_tools"
+	"github.com/guionardo/gs-dev/internal/consts"
+	errs "github.com/guionardo/gs-dev/internal/errors"
+)
+
+// AssertDirectory asserts that the path is a directory and returns the absolute path
+func AssertDirectory(path string) (string, error) {
+	if strings.HasPrefix(path, "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", errs.NewError(err, "error getting user home directory", false)
+		}
+
+		path = filepath.Join(home, strings.TrimPrefix(path, "~/"))
+	}
+
+	if !pathtools.DirExists(path) {
+		return "", fmt.Errorf("path %s is not a directory", path)
+	}
+
+	return filepath.Abs(path)
+}
+
+// AssertFilename asserts that the filename is a file and returns the absolute path
+func AssertFilename(filename string) (string, error) {
+	if filename == "" {
+		return "", errs.NewError(errors.New("filename is required"), "filename is required", false)
+	}
+
+	filename, err := filepath.Abs(filename)
+	if err != nil {
+		return "", errs.NewError(err, "error getting absolute filename", false)
+	}
+
+	if stat, err := os.Stat(filepath.Clean(filename)); err == nil {
+		if !stat.IsDir() {
+			// file exists and is not a directory
+			return filename, nil
+		}
+
+		return filename, errs.NewError(fmt.Errorf("file %s is a directory", filename), "file is a directory", false)
+	}
+	// file does not exist, try to create it directory
+	if err := os.MkdirAll(filepath.Dir(filename), consts.DirPermissions); err != nil {
+		return filename, errs.NewError(err, "error creating directory", false)
+	}
+
+	// try to create the file
+	if err := os.WriteFile(filename, []byte{}, consts.FilesPermissions); err != nil {
+		return filename, errs.NewError(err, "error creating file", false)
+	}
+
+	_ = os.Remove(filename)
+
+	return filename, nil
+}

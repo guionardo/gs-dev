@@ -18,6 +18,7 @@ func ArrayHasValue[T comparable](a []T, value T, comparers ...func(j, i T) bool)
 	if len(comparers) == 0 || comparers[0] == nil {
 		comparers = []func(j, i T) bool{func(j, i T) bool { return j == i }}
 	}
+
 	for index := range a {
 		for comp := range comparers {
 			if comparers[comp](a[index], value) {
@@ -25,6 +26,7 @@ func ArrayHasValue[T comparable](a []T, value T, comparers ...func(j, i T) bool)
 			}
 		}
 	}
+
 	return false
 }
 
@@ -51,6 +53,7 @@ func GetArraysDiffs[T comparable](a []T, b []T) []string {
 			results = append(results, fmt.Sprintf("-%v", a[i]))
 		}
 	}
+
 	for i := range b {
 		if !ArrayHasValue(a, b[i]) {
 			results = append(results, fmt.Sprintf("+%v", b[i]))

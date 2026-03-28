@@ -8,26 +8,24 @@ import (
 	"strings"
 
 	"github.com/guionardo/gs-dev/app/build"
-	outputfile "github.com/guionardo/gs-dev/internal/output_file"
 	"github.com/guionardo/gs-dev/pkg/plugins"
 	"github.com/guionardo/gs-dev/plugins/commons"
 	"github.com/spf13/cobra"
 )
 
-//go:embed init.sh
-var initScript string
-
 type InitShellPlugin struct {
 	commons.BasePlugin
 }
 
-func Constructor(output *outputfile.OutputFile) plugins.CliPlugin {
+//go:embed init.sh
+var initScript string
+
+func Constructor() plugins.CliPlugin {
 	return &InitShellPlugin{
 		BasePlugin: commons.BasePlugin{
 			PluginName:    "init",
 			CanBeDisabled: false,
 			Enabled:       true,
-			Output:        output,
 		},
 	}
 }
@@ -67,6 +65,7 @@ func RunInit() error {
 	// my_array=("apple" "banana" "cherry" "date")
 
 	doesntUseOutput := strings.Join([]string{`"url"`, `"init"`}, " ")
+
 	output := path.Join(os.TempDir(), build.AppName)
 	for key, value := range map[string]string{
 		"GS_DEV":               executable,
@@ -78,5 +77,6 @@ func RunInit() error {
 	}
 
 	fmt.Print(initScript)
+
 	return nil
 }

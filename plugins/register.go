@@ -1,10 +1,10 @@
 package plugins_register
 
 import (
-	outputfile "github.com/guionardo/gs-dev/internal/output_file"
 	"github.com/guionardo/gs-dev/pkg/plugins"
 	"github.com/guionardo/gs-dev/plugins/build"
 	"github.com/guionardo/gs-dev/plugins/dev"
+	gitstats "github.com/guionardo/gs-dev/plugins/git_stats"
 	initshell "github.com/guionardo/gs-dev/plugins/init"
 	"github.com/guionardo/gs-dev/plugins/install"
 	"github.com/guionardo/gs-dev/plugins/pad"
@@ -13,16 +13,17 @@ import (
 	"github.com/guionardo/gs-dev/plugins/url"
 )
 
-func GetRegisteredPlugins(output *outputfile.OutputFile) []plugins.CliPlugin {
+func GetRegisteredPlugins() []plugins.CliPlugin {
 	return []plugins.CliPlugin{
-		dev.Constructor(output),
-		dev.FavConstructor(output),
-		plugins_setup.Constructor(output),
-		initshell.Constructor(output),
-		install.Constructor(output),
-		url.Constructor(output),
-		pad.Constructor(output),
-		todo.Constructor(output),
-		build.Constructor(output),
+		dev.Constructor(),
+		dev.FavConstructor(),
+		plugins_setup.Constructor(),
+		initshell.Constructor(),
+		install.Constructor(),
+		url.Constructor(),
+		pad.Constructor(),
+		todo.Constructor(),
+		build.Constructor(),
+		gitstats.Constructor(),
 	}
 }

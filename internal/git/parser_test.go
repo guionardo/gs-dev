@@ -2,9 +2,12 @@ package git
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParse(t *testing.T) {
+	t.Parallel()
 
 	tests := []struct {
 		name    string
@@ -75,20 +78,17 @@ func TestParse(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			got, err := Parse(tt.url)
-			if err == nil && !tt.want.Success {
-				t.Errorf("Parse() success expected")
-				return
+			if tt.want.Success {
+				require.NoError(t, err, "Parse() should not return error")
 			}
-			if got.Success != tt.want.Success {
-				t.Errorf("Parse() success expected")
-			}
-			if got.Domain != tt.want.Domain || got.Repo != tt.want.Repo {
-				t.Errorf("Parse() = %v, want %v", got, tt.want)
-			}
-			if got.GetURL() != tt.wantUrl {
-				t.Errorf("Parse() = %s, want %v", got.GetURL(), tt.wantUrl)
-			}
+
+			require.Equal(t, tt.want.Success, got.Success, "Parse() success expected")
+			require.Equal(t, tt.want.Domain, got.Domain, "Parse() domain expected")
+			require.Equal(t, tt.want.Repo, got.Repo, "Parse() repo expected")
+			require.Equal(t, tt.wantUrl, got.GetURL(), "Parse() url expected")
 		})
 	}
 }

@@ -3,9 +3,9 @@ package commons
 import (
 	"fmt"
 
-	"github.com/guionardo/gs-dev/internal/generic"
-	outputfile "github.com/guionardo/gs-dev/internal/output_file"
+	"github.com/guionardo/go/flow"
 	"github.com/guionardo/gs-dev/pkg/plugins"
+	postcommand "github.com/guionardo/gs-dev/pkg/post_command"
 )
 
 type BasePlugin struct {
@@ -13,14 +13,15 @@ type BasePlugin struct {
 	PluginName    string
 	CanBeDisabled bool
 	Enabled       bool
-	Output        *outputfile.OutputFile
+	AliasName     string
 }
 
 func (b BasePlugin) String() string {
 	if !b.CanBeDisabled {
-		return fmt.Sprintf("%s: allways enabled", b.PluginName)
+		return b.PluginName + ": allways enabled"
 	}
-	return fmt.Sprintf("%s: %s", b.PluginName, generic.IfThen(b.Enabled, "enabled", "disabled"))
+
+	return fmt.Sprintf("%s: %s", b.PluginName, flow.If(b.Enabled, "enabled", "disabled"))
 }
 
 func (b BasePlugin) Name() string {
@@ -35,7 +36,9 @@ func (b *BasePlugin) SetEnabled(enabled bool) error {
 	if !enabled && !b.CanBeDisabled {
 		return fmt.Errorf("plugin %s cannot be disabled", b.PluginName)
 	}
+
 	b.Enabled = enabled
+
 	return nil
 }
 
@@ -52,7 +55,9 @@ func (b BasePlugin) GetConfiguration() plugins.PluginConfiguration {
 }
 
 func (b BasePlugin) WriteOutput(line string) {
-	if b.Output != nil {
-		b.Output.AddContent(line)
-	}
+	postcommand.AddOutputLine(line)
+}
+
+func (b BasePlugin) HasAlias() bool {
+	return b.AliasName != ""
 }

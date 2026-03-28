@@ -3,7 +3,6 @@ package pad
 import (
 	"errors"
 
-	outputfile "github.com/guionardo/gs-dev/internal/output_file"
 	"github.com/guionardo/gs-dev/pkg/plugins"
 	"github.com/guionardo/gs-dev/plugins/commons"
 	"github.com/spf13/cobra"
@@ -15,13 +14,12 @@ type PadPlugin struct {
 
 const padName = "pad"
 
-func Constructor(output *outputfile.OutputFile) plugins.CliPlugin {
+func Constructor() plugins.CliPlugin {
 	return &PadPlugin{
 		BasePlugin: commons.BasePlugin{
 			PluginName:    padName,
 			CanBeDisabled: true,
 			Enabled:       false,
-			Output:        output,
 		},
 	}
 }
@@ -30,6 +28,7 @@ func (p *PadPlugin) Setup(manager plugins.PluginsManager, configurationFolder st
 	//TODO: Implementar
 	return nil
 }
+
 func (p *PadPlugin) GetCobraCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   padName,

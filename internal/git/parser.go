@@ -5,18 +5,13 @@ import (
 	"regexp"
 )
 
-type GitURL struct {
-	Success bool
-	Domain  string
-	Repo    string
-	Format  string
-}
-
-func (g GitURL) GetURL() string {
-	return fmt.Sprintf(g.Format, g.Domain, g.Repo)
-}
-
 type (
+	GitURL struct {
+		Success bool
+		Domain  string
+		Repo    string
+		Format  string
+	}
 	GitParser struct {
 		sshRegex          *regexp.Regexp
 		httpRegex         *regexp.Regexp
@@ -26,6 +21,10 @@ type (
 )
 
 var parsers = make(map[string]*GitParser, 0)
+
+func (g GitURL) GetURL() string {
+	return fmt.Sprintf(g.Format, g.Domain, g.Repo)
+}
 
 func Register(name string, sshRegex string, httpRegex string, getSshGitUrlFromMatches matchesParser) {
 	parsers[name] = &GitParser{
@@ -43,11 +42,15 @@ func Parse(url string) (gitUrl *GitURL, err error) {
 				continue
 			}
 		}
+
 		gitUrl = parser.gitUrlFromMatches(matches)
+
 		break
 	}
+
 	if gitUrl == nil {
 		err = fmt.Errorf("cannot parse URL %s to a git repository", url)
 	}
+
 	return
 }

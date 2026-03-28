@@ -8,9 +8,9 @@ import (
 	"os"
 	"path/filepath"
 
+	pathtools "github.com/guionardo/go/path_tools"
 	"github.com/guionardo/gs-dev/internal/cmd"
-	outputfile "github.com/guionardo/gs-dev/internal/output_file"
-	pathtools "github.com/guionardo/gs-dev/internal/path_tools"
+	"github.com/guionardo/gs-dev/internal/logging"
 	plugins_register "github.com/guionardo/gs-dev/plugins"
 	"github.com/spf13/cobra/doc"
 )
@@ -19,10 +19,10 @@ func main() {
 	var docsFolder string
 	flag.StringVar(&docsFolder, "docs", "../../docs", "docs folder")
 	flag.Parse()
-	slog.SetLogLoggerLevel(slog.LevelDebug)
-	output, err := outputfile.NewOutputFile("")
-	rootCmd := cmd.GetRootCmd([]string{}, plugins_register.GetRegisteredPlugins(output)...)
-	docsFolder, err = filepath.Abs(docsFolder)
+	logging.Setup(false, os.Stdout)
+
+	rootCmd := cmd.GetRootCmd([]string{}, plugins_register.GetRegisteredPlugins()...)
+	docsFolder, err := filepath.Abs(docsFolder)
 	if err != nil {
 		slog.Error("Failed to get docs folder", slog.String("folder", docsFolder), slog.Any("error", err))
 		return
