@@ -1,6 +1,7 @@
 package fav
 
 import (
+	"github.com/guionardo/gs-dev/internal/commands"
 	"github.com/guionardo/gs-dev/internal/config"
 	"github.com/guionardo/gs-dev/internal/consts"
 	devservice "github.com/guionardo/gs-dev/internal/services/dev"
@@ -13,20 +14,18 @@ const (
 )
 
 type FavCommand struct {
+	commands.CommonCommand
+
 	service *devservice.DevService
+}
+
+func (f *FavCommand) Init() {
+	f.InitCommandVariables(name, description, true, "", true)
 }
 
 func (f *FavCommand) Setup(configuration *config.ConfigFile) error {
 	f.service = devservice.NewService(configuration)
 	return f.service.PurgeUnexistentRoots()
-}
-
-func (f *FavCommand) GetName() string {
-	return name
-}
-
-func (f *FavCommand) GetDescription() string {
-	return description
 }
 
 func (f *FavCommand) GetCobraCommand() *cobra.Command {

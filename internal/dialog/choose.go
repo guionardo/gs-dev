@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
 )
@@ -71,8 +72,17 @@ func Choose(label string, options ...ChooseItem) (answer string, err error) {
 func ToAnyArray(items []string) []ChooseItem {
 	chooseItems := make([]ChooseItem, len(items))
 	for index, option := range items {
+		words := strings.SplitN(option, ":", 2) //nolint:mnd // split the option into two parts
+
+		var description string
+		if len(words) > 1 {
+			description = strings.TrimSpace(words[1])
+			option = words[0]
+		}
+
 		chooseItems[index] = ChooseItem{
-			Name: option,
+			Name:        option,
+			Description: description,
 		}
 	}
 

@@ -57,18 +57,13 @@ func (i *InitShellPlugin) GetCobraCommand() *cobra.Command {
 }
 
 func RunInit() error {
-	executable, err := os.Executable()
-	if err != nil {
-		return err
-	}
 	// #declare an array
 	// my_array=("apple" "banana" "cherry" "date")
-
 	doesntUseOutput := strings.Join([]string{`"url"`, `"init"`}, " ")
 
 	output := path.Join(os.TempDir(), build.AppName)
 	for key, value := range map[string]string{
-		"GS_DEV":               executable,
+		"GS_DEV":               build.ExecutableName,
 		"GS_OUTPUT":            output,
 		"GS_TOOL":              fmt.Sprintf("%s %s", build.AppName, build.Version),
 		"GS_DOESNT_USE_OUTPUT": doesntUseOutput,

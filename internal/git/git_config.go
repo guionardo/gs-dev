@@ -35,7 +35,8 @@ type (
 	GitConfig struct {
 		// t       *toml.Tree
 		// Core    GitConfigCore
-		Remotes []GitConfigRemote
+		Remotes        []GitConfigRemote
+		RepositoryName string
 	}
 	// GitConfigCore struct {
 	// 	RepositoryFormatVersion int
@@ -58,8 +59,16 @@ func NewGitConfig(filename string) (*GitConfig, error) {
 		return nil, err
 	}
 
+	var repositoryName string
+	if len(remotes) > 0 {
+		repositoryName = strings.TrimSuffix(filepath.Base(remotes[0].URL), ".git")
+	} else {
+		repositoryName = filepath.Base(filepath.Dir(filename))
+	}
+
 	return &GitConfig{
-		Remotes: remotes,
+		Remotes:        remotes,
+		RepositoryName: repositoryName,
 	}, nil
 }
 

@@ -14,6 +14,7 @@ require golang.org/x/sys v0.42.0 // indirect
 require (
 	github.com/google/uuid v1.6.0
 	github.com/guionardo/go v1.0.0
+	github.com/hashicorp/go-version v1.9.0
 	github.com/stretchr/testify v1.11.1
 )
 

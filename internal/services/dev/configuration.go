@@ -11,8 +11,8 @@ type (
 		commons.PluginConfiguration
 
 		LastSync        time.Time      `yaml:"last_sync"`
-		SyncInterval    time.Duration  `yaml:"sync_interval"`
-		DefaultMaxDepth int            `yaml:"default_max_depth"`
+		SyncInterval    time.Duration  `yaml:"sync_interval" default:"1h"`
+		DefaultMaxDepth int            `yaml:"default_max_depth" default:"3"`
 		LastChosen      map[string]int `yaml:"last_chosen"`
 		MostChosenCount int            `yaml:"most_chosen_count" default:"5"`
 	}
@@ -36,12 +36,15 @@ func (c *DevConfiguration) Defaults() {
 	if c.MostChosenCount < 1 {
 		c.MostChosenCount = DefaultMostChosenCount
 	}
+
 	if c.DefaultMaxDepth < 1 {
 		c.DefaultMaxDepth = DefaultMaxDepth
 	}
+
 	if c.SyncInterval == 0 {
 		c.SyncInterval = DefaultSyncInterval
 	}
+
 	if c.LastChosen == nil {
 		c.LastChosen = make(map[string]int)
 	}
@@ -51,6 +54,7 @@ func (c *Root) Defaults() {
 	if c.MaxDepth < 1 {
 		c.MaxDepth = DefaultMaxDepth
 	}
+
 	if c.Folders == nil {
 		c.Folders = make([]string, 0)
 	}

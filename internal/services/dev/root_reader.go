@@ -56,7 +56,7 @@ func NewRootReader(directory string, root *Root) *RootReader {
 }
 
 func (r *RootReader) UpdateRoot(root *Root) {
-	readenFolders := make([]string, 0)
+	readenFolders := make([]string, 0, len(r.readenProjects))
 	for project := range r.readenProjects {
 		readenFolders = append(readenFolders, project)
 	}

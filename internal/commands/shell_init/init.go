@@ -3,11 +3,16 @@ package shellinit
 import (
 	"fmt"
 
+	"github.com/guionardo/gs-dev/internal/commands"
 	"github.com/guionardo/gs-dev/internal/config"
+	installservice "github.com/guionardo/gs-dev/internal/services/install"
 	"github.com/spf13/cobra"
 )
 
 type InitCommand struct {
+	commands.CommonCommand
+
+	installService *installservice.InstallService
 }
 
 const (
@@ -15,16 +20,13 @@ const (
 	description = "Initialization for shell alias"
 )
 
+func (i *InitCommand) Init() {
+	i.InitCommandVariables(name, description, false, "", false)
+}
 func (i *InitCommand) Setup(configuration *config.ConfigFile) error {
+	i.installService = installservice.NewInstallService(configuration)
+
 	return nil
-}
-
-func (i *InitCommand) GetName() string {
-	return name
-}
-
-func (i *InitCommand) GetDescription() string {
-	return description
 }
 
 func (i *InitCommand) GetCobraCommand() *cobra.Command {
@@ -32,15 +34,12 @@ func (i *InitCommand) GetCobraCommand() *cobra.Command {
 		Use:   name,
 		Short: description,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fmt.Println(description)
+			fmt.Print(i.installService.GetInitCommand())
 			return nil
 		},
 	}
 }
 
 func (i *InitCommand) GetTUICommand() func() error {
-	return func() error {
-		fmt.Println(description)
-		return nil
-	}
+	return nil
 }

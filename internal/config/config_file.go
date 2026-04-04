@@ -94,7 +94,7 @@ func GetValue[T any](config *ConfigFile, key string) (value T, err error) {
 	return value, nil
 }
 
-func SetValue[T any](config ConfigFile, key string, value T) (err error) {
+func SetValue[T any](config *ConfigFile, key string, value T) (err error) {
 	config.data[key] = value
 	return nil
 }

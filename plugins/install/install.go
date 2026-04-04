@@ -2,7 +2,6 @@ package install
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/guionardo/gs-dev/app/build"
@@ -34,12 +33,7 @@ func (i *InstallShellPlugin) Setup(manager plugins.PluginsManager, configuration
 
 	// Source command
 	//	source <(./go-dev init)
-	executableName, err := os.Executable()
-	if err != nil {
-		return err
-	}
-
-	i.sourceCommand = fmt.Sprintf("source <(%s init)", executableName)
+	i.sourceCommand = fmt.Sprintf("source <(%s init)", build.ExecutableName)
 
 	return nil
 }

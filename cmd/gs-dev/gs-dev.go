@@ -1,20 +1,34 @@
 package main
 
 import (
-	"log/slog"
-	"os"
+	"log"
 
-	_ "github.com/spf13/cobra/doc"
-
-	"github.com/guionardo/gs-dev/app/build"
-	"github.com/guionardo/gs-dev/internal/cmd"
-	plugins_register "github.com/guionardo/gs-dev/plugins"
+	"github.com/guionardo/gs-dev/internal/commands"
+	"github.com/guionardo/gs-dev/internal/commands/dev"
+	"github.com/guionardo/gs-dev/internal/commands/fav"
+	gitstats "github.com/guionardo/gs-dev/internal/commands/git_stats"
+	"github.com/guionardo/gs-dev/internal/commands/install"
+	"github.com/guionardo/gs-dev/internal/commands/setup"
+	shellinit "github.com/guionardo/gs-dev/internal/commands/shell_init"
+	"github.com/guionardo/gs-dev/internal/commands/url"
 )
 
 func main() {
-	rootCmd := cmd.GetRootCmd(os.Args[1:], plugins_register.GetRegisteredPlugins()...)
+	commandsManager, err := commands.NewCommandManager()
+	if err != nil {
+		log.Fatalf("Error creating commands manager: %v", err)
+	}
 
-	slog.Debug("Starting gs-dev", slog.String("version", build.Version))
+	commandsManager.Register(
+		&shellinit.InitCommand{},
+		&dev.DevCommand{},
+		&fav.FavCommand{},
+		&gitstats.GitStatsCommand{},
+		&install.InstallCommand{},
+		&url.UrlCommand{},
+		&setup.SetupCommand{},
+	)
+	rootCmd := commandsManager.GetRootCommand()
 
 	_ = rootCmd.Execute()
 }

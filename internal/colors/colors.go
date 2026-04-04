@@ -50,6 +50,10 @@ func Success(msg string, a ...any) {
 	_, _ = colorMap[SUCCESS].Printf(msg, a...)
 }
 
+func Error(msg string, a ...any) {
+	_, _ = colorMap[ERROR].Printf(msg, a...)
+}
+
 func Parse(msg string, a ...any) string {
 	words := bytes.NewBufferString("")
 	lastColor := NORMAL

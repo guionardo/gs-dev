@@ -50,6 +50,10 @@ func DetectProject(folder string) (*ProjectData, error) {
 	hasAtLeastOneFile := false
 
 	entries, err := os.ReadDir(folder)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, entry := range entries {
 		if !entry.IsDir() {
 			hasAtLeastOneFile = true

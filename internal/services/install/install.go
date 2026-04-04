@@ -2,10 +2,10 @@ package installservice
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/guionardo/gs-dev/app/build"
+	"github.com/guionardo/gs-dev/internal/commands"
 	"github.com/guionardo/gs-dev/internal/config"
 	"github.com/guionardo/gs-dev/internal/shell"
 )
@@ -15,12 +15,7 @@ type InstallService struct {
 }
 
 func NewInstallService(configuration *config.ConfigFile) *InstallService {
-	executableName, err := os.Executable()
-	if err != nil {
-		panic(fmt.Errorf("error getting executable name: %w", err))
-	}
-
-	sourceCommand := fmt.Sprintf("source <(%s init)", executableName)
+	sourceCommand := fmt.Sprintf("source <(%s init)", build.ExecutableName)
 
 	return &InstallService{
 		sourceCommand: sourceCommand,
@@ -32,10 +27,12 @@ func (i *InstallService) IsInstalled() (msg string, isInstalled bool) {
 	if err != nil {
 		return fmt.Sprintf("error getting profile file: %v", err), false
 	}
+
 	if line, ok := profile.HasEnabledCommandLine(); ok {
 		return fmt.Sprintf("binding was just installed into shell profile %s at line %d", profile.Path, line), true
 	}
-	return fmt.Sprintf("binding was not installed into shell profile %s", profile.Path), false
+
+	return "binding was not installed into shell profile " + profile.Path, false
 }
 
 func (i *InstallService) Install() error {
@@ -90,4 +87,15 @@ func (i *InstallService) Uninstall() error {
 
 func (i *InstallService) GetSourceCommand() string {
 	return i.sourceCommand
+}
+
+func (i *InstallService) GetInitCommand() string {
+	initSetup := commands.NewInitSetup(build.AppName)
+
+	initCommand, err := initSetup.GenerateInitSetup(build.ExecutableName)
+	if err != nil {
+		return ""
+	}
+
+	return string(initCommand)
 }

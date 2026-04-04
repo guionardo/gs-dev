@@ -14,6 +14,7 @@ import (
 	"github.com/guionardo/gs-dev/internal/consts"
 	"github.com/guionardo/gs-dev/internal/dialog"
 	errs "github.com/guionardo/gs-dev/internal/errors"
+	"github.com/guionardo/gs-dev/internal/logging"
 	postcommand "github.com/guionardo/gs-dev/pkg/post_command"
 	"github.com/spf13/cobra"
 )
@@ -25,6 +26,8 @@ type (
 	}
 
 	Command interface {
+		// Initialize the command
+		Init()
 		Setup(configuration *config.ConfigFile) error
 		GetName() string
 		GetDescription() string
@@ -34,6 +37,14 @@ type (
 
 		// if the command is a TUI command, it will be added to the TUI command
 		GetTUICommand() func() error
+
+		// if the command has an init alias, it will be added to the init script
+		HasInitAlias() bool
+
+		// Use by the init alias
+		GetArguments() string
+
+		UsesOutput() bool
 	}
 )
 
@@ -52,8 +63,9 @@ func NewCommandManager() (*CommandManager, error) {
 	}, nil
 }
 
-func (c *CommandManager) Register(command ...Command) *CommandManager {
-	for _, command := range command {
+func (c *CommandManager) Register(commands ...Command) *CommandManager {
+	for _, command := range commands {
+		command.Init()
 		c.commands[command.GetName()] = command
 
 		err := command.Setup(c.configFile)
@@ -61,6 +73,9 @@ func (c *CommandManager) Register(command ...Command) *CommandManager {
 			slog.Error("Error setting up command", slog.String("command", command.GetName()), slog.Any("error", err))
 		}
 	}
+
+	// Add the registered commands to the init setup
+	_ = NewInitSetup(build.AppName, commands...)
 
 	return c
 }
@@ -71,10 +86,19 @@ func (c *CommandManager) GetRootCommand() *cobra.Command {
 		Short: "gs-dev",
 		Long:  "gs-dev",
 		RunE:  c.Run,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			debug, _ := cmd.Flags().GetBool("debug")
+
+			logging.PreSetupLog("Debug mode enabled", slog.LevelDebug)
+			logging.Setup(debug, os.Stdout)
+		},
 		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
 			return postcommand.WriteOutput()
 		},
 	}
+
+	rootCmd.PersistentFlags().Bool("debug", false, "Enable debug mode")
+
 	aliasCommands := []postcommand.Command{}
 
 	for _, command := range c.commands {
@@ -94,6 +118,10 @@ func (c *CommandManager) GetRootCommand() *cobra.Command {
 				cmd.Printf("%s %s\n%s", build.AppName, build.Version, build.BuildInfo)
 			} else {
 				cmd.Printf("%s", build.Version)
+			}
+
+			if !build.IsValidBinary {
+				cmd.Printf(" %s (development binary)", build.ExecutableName)
 			}
 		},
 

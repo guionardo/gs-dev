@@ -1,6 +1,7 @@
 package devservice
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"sort"
@@ -24,7 +25,6 @@ type DevService struct {
 
 func NewService(configuration *config.ConfigFile) *DevService {
 	roots, err := config.GetValue[RootsConfiguration](configuration, "roots")
-
 	if err != nil {
 		slog.Warn("Error getting roots configuration", "error", err)
 	}
@@ -37,7 +37,9 @@ func NewService(configuration *config.ConfigFile) *DevService {
 	if err != nil {
 		slog.Warn("Error getting dev configuration", "error", err)
 	}
+
 	devConfig.Defaults()
+
 	return &DevService{
 		configFile:  configuration,
 		rootsConfig: roots,
@@ -199,7 +201,7 @@ func (d *DevService) GetFilteredFolders(words []string) (folders []string) {
 
 func (d *DevService) RunFavorites() (err error) {
 	if len(d.devConfig.LastChosen) == 0 {
-		return fmt.Errorf("no folders chosen")
+		return errors.New("no folders chosen")
 	}
 
 	lastChosen := make([]string, 0, len(d.devConfig.LastChosen))
@@ -223,6 +225,10 @@ func (d *DevService) RunFavorites() (err error) {
 		postcommand.AddOutputLine("cd " + folder)
 	}
 
+	return nil
+}
+
+func (d *DevService) Setup() error {
 	return nil
 }
 

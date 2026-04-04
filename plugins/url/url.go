@@ -77,7 +77,7 @@ func (u *URL) Setup(manager plugins.PluginsManager, configurationFolder string) 
 }
 
 func checkReachableUrl(url string) error {
-	resp, err := http.Head(url)
+	resp, err := http.Head(url) // nolint:gosec // G114 -- URL is parsed and restricted to HTTP(S) before request creation.
 	if err != nil {
 		return err
 	}

@@ -1,4 +1,4 @@
-package postcommand
+package commands
 
 import (
 	"errors"
@@ -13,17 +13,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type (
-	InitSetup struct {
-		toolName string
-		commands map[string]Command // command name -> command arguments
-	}
-	Command struct {
-		name      string
-		arguments string
-		useOutput bool
-	}
-)
+type InitSetup struct {
+	toolName string
+	commands map[string]Command // command name -> command arguments
+}
 
 const (
 	flagOutput  = "post-command-output"
@@ -32,28 +25,25 @@ const (
 
 var (
 	postCommandOutputFile string
+	initSetupInstance     *InitSetup
 )
 
 func NewInitSetup(toolName string, commands ...Command) *InitSetup {
-	is := &InitSetup{
-		toolName: toolName,
-		commands: make(map[string]Command),
-	}
-	for _, command := range commands {
-		is.commands[command.name] = command
+	if initSetupInstance == nil {
+		initSetupInstance = &InitSetup{
+			toolName: toolName,
+			commands: make(map[string]Command),
+		}
+		for _, command := range commands {
+			initSetupInstance.commands[command.GetName()] = command
+		}
 	}
 
-	return is
+	return initSetupInstance
 }
 
-func NewCommand(name string, useOutput bool, arguments ...string) Command {
-	return Command{
-		name:      name,
-		useOutput: useOutput,
-		arguments: strings.Join(arguments, " "),
-	}
-}
-
+// GenerateInitSetup generates the init setup for the commands
+// TODO: move to the service
 func (i *InitSetup) GenerateInitSetup(toolBinaryPath string) ([]byte, error) {
 	if len(i.commands) == 0 {
 		return nil, errors.New("no commands to generate init setup")
@@ -61,13 +51,12 @@ func (i *InitSetup) GenerateInitSetup(toolBinaryPath string) ([]byte, error) {
 
 	commandNames := make([]string, 0)
 	for _, command := range i.commands {
-		commandNames = append(commandNames, command.name)
+		commandNames = append(commandNames, command.GetName())
 	}
 
-	content := fmt.Appendf([]byte{}, "#!/bin/env bash\n")
+	content := fmt.Appendf([]byte{}, "#!/usr/bin/env bash\n")
 
-	// wrapperName := fmt.Sprintf("_%s_wrapper", i.toolName)
-	treatOutputFunctionName := fmt.Sprintf("_%s_treat_output", i.toolName)
+	treatOutputFunctionName := strings.ReplaceAll(fmt.Sprintf("__%s_treat_output", i.toolName), "-", "_")
 
 	// create output file name
 	mktemp, err := files.LocateBinary("mktemp")
@@ -79,16 +68,6 @@ func (i *InitSetup) GenerateInitSetup(toolBinaryPath string) ([]byte, error) {
 	} else {
 		tmpFileAttr = path.Join(os.TempDir(), i.toolName+"."+uuid.New().String())
 	}
-
-	// // write wrapper function
-	// content = fmt.Appendf(content, "%s() {\n", wrapperName)
-	// content = fmt.Appendf(content, "  use_output=(%s)\n", strings.Join(useOutputCommands, " "))
-	// content = fmt.Appendf(content, "  if [[ ${use_output[@]} =~ $1 ]]; then\n")
-	// content = fmt.Appendf(content, "    %s --output $tmp_file $@ && %s\n", toolBinaryPath, treatOutputFunctionName)
-	// content = fmt.Appendf(content, "  else\n")
-	// content = fmt.Appendf(content, "    %s $@ \n", toolBinaryPath)
-	// content = fmt.Appendf(content, "  fi\n")
-	// content = fmt.Appendf(content, "}\n")
 
 	// write treat output function
 	content = fmt.Appendf(content, "%s() {\n", treatOutputFunctionName)
@@ -102,22 +81,29 @@ func (i *InitSetup) GenerateInitSetup(toolBinaryPath string) ([]byte, error) {
 	content = fmt.Appendf(content, "  stty sane\n")
 	content = fmt.Appendf(content, "}\n")
 
+	aliasCommands := make([]string, 0)
 	// write command functions
 	for _, command := range i.commands {
-		content = fmt.Appendf(content, "%s() {\n", command.name)
-		if command.useOutput {
+		if !command.HasInitAlias() {
+			continue
+		}
+
+		aliasCommands = append(aliasCommands, command.GetName())
+
+		content = fmt.Appendf(content, "%s() {\n", command.GetName())
+		if command.UsesOutput() {
 			content = fmt.Appendf(content, `  tmp_file="%s"  
-  %s --%s $tmp_file %s $@ && %s $tmp_file
-  `, tmpFileAttr, toolBinaryPath, flagOutput, command.arguments, treatOutputFunctionName)
+  %s --%s $tmp_file %s %s $@ && %s $tmp_file
+  `, tmpFileAttr, toolBinaryPath, flagOutput, command.GetName(), command.GetArguments(), treatOutputFunctionName)
 		} else {
-			content = fmt.Appendf(content, "  %s $@ \n", toolBinaryPath)
+			content = fmt.Appendf(content, "  %s %s $@ \n", toolBinaryPath, command.GetName())
 		}
 
 		content = fmt.Appendf(content, "}\n")
 	}
 
 	// write command aliases
-	content = fmt.Appendf(content, "echo '%s is ready to use (%s)'\n", i.toolName, strings.Join(commandNames, ", "))
+	content = fmt.Appendf(content, "echo '%s is ready to use (%s)'\n", i.toolName, strings.Join(aliasCommands, ", "))
 
 	return content, nil
 }

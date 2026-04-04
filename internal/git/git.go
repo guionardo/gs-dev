@@ -6,6 +6,8 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+
+	urlparsers "github.com/guionardo/gs-dev/internal/git/url_parsers"
 )
 
 func GetRemoteHttpURL(folderName string) (string, error) {
@@ -30,17 +32,13 @@ func GetRemoteHttpURL(folderName string) (string, error) {
 }
 
 func getHttpUrl(url string) (string, error) {
-	gu, err := Parse(url)
-	if err != nil || !gu.Success {
-		return "", fmt.Errorf("invalid git url: %s", url)
-	}
-
-	return gu.GetURL(), nil
+	parsedURL, err := urlparsers.Parse(url)
+	return parsedURL, err
 }
 
 func getRepositoryRoot(folderName string) (root string, err error) {
 	root = folderName
-	maxDeep := 2
+	maxDeep := 3
 	level := 0
 
 	var stat os.FileInfo
