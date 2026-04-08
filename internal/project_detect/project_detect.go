@@ -7,6 +7,7 @@ import (
 
 	pathtools "github.com/guionardo/go/path_tools"
 	"github.com/guionardo/gs-dev/internal/fs_tools"
+	"github.com/guionardo/gs-dev/internal/project_detect/detector"
 )
 
 type (
@@ -78,8 +79,8 @@ func isGitRepository(folder string) bool {
 
 func getProjectType(folder string) (projectType string, projectName string) {
 	var err error
-	for _, detector := range detectors {
-		if projectType, projectName, err = detector(folder); err == nil {
+	for _, detectorFn := range detectors {
+		if projectType, projectName, err = detectorFn(folder); err == nil {
 			break
 		}
 	}
@@ -89,7 +90,13 @@ func getProjectType(folder string) (projectType string, projectName string) {
 	}
 
 	if projectType == "" {
-		projectType = UNKNOWN
+		projects, err := detector.Detect(folder, 10)
+		if err == nil && len(projects) > 0 {
+			projectType = projects[0].Type
+			projectName = projects[0].Name
+		} else {
+			projectType = UNKNOWN
+		}
 	}
 
 	return projectType, projectName

@@ -1,0 +1,198 @@
+# Cross-platform Makefile for Linux and Windows (via WSL/Git Bash)
+# For native Windows, use Makefile.ps1 PowerShell script
+
+GOBIN ?= $$(go env GOPATH)/bin
+UNAME_S := $(shell uname -s 2>/dev/null || echo "Windows")
+OS := $(shell echo $(UNAME_S) | tr '[:upper:]' '[:lower:]')
+
+# Detect package manager
+ifeq ($(OS),linux)
+	PKG_MGR := $(shell which apt-get >/dev/null 2>&1 && echo "apt" || which yum >/dev/null 2>&1 && echo "yum" || which apk >/dev/null 2>&1 && echo "apk" || echo "unknown")
+endif
+
+help: ## Display this help
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+gocheck:
+	@if ! command -v go >/dev/null 2>&1 ; then \
+		echo "\033[31mGO IS NOT INSTALLED\033[0m"; \
+		exit 1 ; \
+	fi
+	@if ! echo "${PATH}" | grep -q "${GOBIN}"; then \
+		echo  "\033[31mGO BIN folder is not in PATH: ${GOBIN}\033[0m"; \
+		exit 1 ; \
+	fi
+
+##@ Dependencies
+
+deps: gocheck install-pre-commit install-golangci install-commitlint install-govulncheck install-swaggo install-benchstat ## Installs/updates dependencies
+	@echo "\n🚀 \033[30;44m  ALL DEPENDENCIES ARE INSTALLED  \033[0m"
+
+install-pre-commit:
+	@echo  "\n🛠️  \033[30;42m INSTALLING PRE-COMMIT \033[0m"
+	@if command -v pre-commit >/dev/null 2>&1; then \
+		echo "pre-commit already installed, updating..."; \
+		pre-commit autoupdate; \
+	else \
+		if [ "$(PKG_MGR)" = "apt" ]; then \
+			sudo apt install -y pre-commit; \
+		elif [ "$(PKG_MGR)" = "yum" ]; then \
+			sudo yum install -y pre-commit; \
+		elif [ "$(PKG_MGR)" = "apk" ]; then \
+			sudo apk add --no-cache pre-commit; \
+		else \
+			echo "Please install pre-commit manually: pip install pre-commit"; \
+			exit 1; \
+		fi; \
+	fi
+	@pre-commit autoupdate || true
+	@pre-commit install -t commit-msg -t pre-commit || echo "⚠️  Pre-commit hooks installation skipped (may need manual setup)"
+	@echo "✅  PRE-COMMIT INSTALLED"
+
+install-golangci:
+	@echo  "\n🛠️  \033[30;42m INSTALLING GOLANGCI-LINT \033[0m"
+	@if command -v golangci-lint >/dev/null 2>&1; then \
+		echo "golangci-lint already installed, skipping..."; \
+	else \
+		if command -v curl >/dev/null 2>&1; then \
+			curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $$(go env GOPATH)/bin latest; \
+		elif command -v wget >/dev/null 2>&1; then \
+			wget -O- -q https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b $$(go env GOPATH)/bin latest; \
+		else \
+			echo "Please install curl or wget to install golangci-lint"; \
+			exit 1; \
+		fi; \
+	fi
+	@echo "✅  GOLANGCI-LINT INSTALLED"
+
+install-commitlint:
+	@echo  "\n🛠️  \033[30;42m INSTALLING COMMITLINT \033[0m"
+	@go install github.com/conventionalcommit/commitlint@latest
+	@if ! command -v commitlint >/dev/null 2>&1; then \
+		echo "commitlint not found or not accessible yet."; \
+		exit 1; \
+	fi
+	@if [ ! -f .commitlint.yml ] && [ ! -f .commitlint.yaml ] && [ ! -f commitlint.yml ] && [ ! -f commitlint.yaml ]; then \
+		echo "\n  No commitlint config file found."; \
+		read -p "Do you want to create commitlint config? (y/n): " answer && \
+		if [ "$$answer" = "y" ] || [ "$$answer" = "Y" ]; then \
+			echo "Creating commitlint config..."; \
+			commitlint config create; \
+		else \
+			echo "Skipping commitlint config creation."; \
+		fi; \
+	fi
+	@echo "✅  COMMITLINT INSTALLED"
+
+install-govulncheck:
+	@echo  "\n🛠️  \033[30;42m INSTALLING GOVULNCHECK \033[0m"
+	@go install golang.org/x/vuln/cmd/govulncheck@latest
+	@echo "✅  GOVULNCHECK INSTALLED"
+
+install-swaggo:
+	@echo  "\n🛠️  \033[30;42m INSTALLING SWAGGER CLI \033[0m"
+	@go install github.com/swaggo/swag/cmd/swag@latest
+	@echo "✅  SWAGGER CLI INSTALLED"
+
+##@ Testing
+
+install-go-test-coverage:
+	@echo  "\n🛠️  \033[30;42m INSTALLING GO-TEST-COVERAGE \033[0m"
+	@go install github.com/vladopajic/go-test-coverage/v2@latest
+	@if [ -f .testcoverage.yml ]; then \
+		echo "go-test-coverage config file already exists."; \
+	else \
+		echo "Creating default go-test-coverage config file..."; \
+		if command -v curl >/dev/null 2>&1; then \
+			curl -o .testcoverage.yml -L https://github.com/vladopajic/go-test-coverage/raw/refs/heads/main/.testcoverage.example.yml; \
+		elif command -v wget >/dev/null 2>&1; then \
+			wget -O .testcoverage.yml https://github.com/vladopajic/go-test-coverage/raw/refs/heads/main/.testcoverage.example.yml; \
+		else \
+			echo "⚠️  Please download .testcoverage.yml manually"; \
+		fi; \
+	fi
+	@if [ -f .gitignore ]; then \
+		grep -q cover.out .gitignore 2>/dev/null || echo cover.out >> .gitignore; \
+	fi
+	@echo "✅  GO-TEST-COVERAGE INSTALLED"
+
+install-benchstat:
+	@echo  "\n🛠️  \033[30;42m INSTALLING BENCHSTAT \033[0m"
+	@go install golang.org/x/perf/cmd/benchstat@latest
+	@if [ -f .gitignore ]; then \
+		grep -q benchmarks .gitignore 2>/dev/null || echo benchmarks >> .gitignore; \
+	fi
+	@echo "✅  BENCHSTAT INSTALLED"
+
+test: ## Run tests
+	@go test ./... -v -count=1
+
+test-e2e: ## Run end-to-end tests
+	@go mod vendor
+	@SCOPE=e2e go test ./tests/e2e/... -count=1 -v
+
+coverage:  ## Check test coverage
+	@go test ./... -coverprofile=./cover.out -covermode=atomic -coverpkg=./...
+	@go-test-coverage --config=./.testcoverage.yml
+
+bench: ## Run benchmarks
+	@echo  "\n🛠️  \033[30;42m RUNNING BENCHMARKS \033[0m"
+	@mkdir -p benchmarks
+	@go test -benchmem -run=^$$  -bench=. ./... | tee benchmarks/benchmark.txt
+
+bench-stat: ## Run benchmarks and show statistics
+	@mkdir -p benchmarks
+	@if [ ! -f benchmarks/benchmark.txt ]; then  \
+		echo "\n🛠️  \033[30;42m RUNNING BENCHMARKS \033[0m"; \
+		go test -benchmem -run=^$$ -bench=. ./... | tee benchmarks/benchmark.txt; \
+		echo "✅  NO PREVIOUS BENCHMARK FOUND TO COMPARE"; \
+	else \
+		echo "\n🛠️  \033[30;42m RUNNING NEW BENCHMARKS AND SHOWING STATISTICS \033[0m"; \
+		go test -benchmem -run=^$$ -bench=. ./... | tee benchmarks/statistics.txt; \
+		benchstat benchmarks/benchmark.txt benchmarks/statistics.txt; \
+	fi
+
+##@ Linting
+
+check_golangci:
+	@if ! command -v golangci-lint >/dev/null 2>&1; then \
+		echo "\033[31mGOLANGCI-LINT IS NOT INSTALLED\033[0m"; \
+		echo " Please run 'make deps'"; \
+		exit 1; \
+	fi
+
+lint: check_golangci ## Run linters
+	@golangci-lint run ./...
+
+lint-fix: check_golangci ## Run linters and fix issues
+	@golangci-lint run --fix ./...
+
+swag: ## Generate swagger docs
+	@echo  "\n🛠️  \033[30;42m FORMATTING SWAGGER DESCRIPTORS \033[0m"
+	@swag fmt -g ./cmd/http/main.go
+	@echo  "\n🛠️  \033[30;42m GENERATING SWAGGER DOCS \033[0m"
+	@swag init -g ./cmd/http/main.go -o ./docs/swagger --parseDependency --parseInternal
+
+##@ Localhost
+
+localhost-up: ## Run docker compose for localhost API
+	@docker compose -f ./scripts/build/localhost/docker-compose.yml up -d
+
+localhost-down: ## Stop docker compose for localhost API
+	@docker compose -f ./scripts/build/localhost/docker-compose.yml down
+
+localhost-rm: localhost-down ## Remove docker compose for localhost API
+	@docker compose -f ./scripts/build/localhost/docker-compose.yml rm
+	@docker volume rm localhost_wk_platform_organization_postgres_data
+	@docker volume rm localhost_wk_platform_organization_mssql_data
+
+##@ E2E Tests
+
+e2e-up: ## Run docker compose for e2e API
+	@docker compose -f ./scripts/build/e2e/docker-compose.yml up -d
+
+e2e-down: ## Stop docker compose for e2e API
+	@docker compose -f ./scripts/build/e2e/docker-compose.yml down
+
+e2e-rm: ## Remove docker compose for e2e API
+	@docker compose -f ./scripts/build/e2e/docker-compose.yml rm

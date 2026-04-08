@@ -4,14 +4,23 @@ package main
 
 import (
 	"flag"
+	"log"
 	"log/slog"
 	"os"
 	"path/filepath"
 
 	pathtools "github.com/guionardo/go/path_tools"
-	"github.com/guionardo/gs-dev/internal/cmd"
+	"github.com/guionardo/gs-dev/internal/commands"
+	"github.com/guionardo/gs-dev/internal/commands/dev"
+	"github.com/guionardo/gs-dev/internal/commands/fav"
+	gitstats "github.com/guionardo/gs-dev/internal/commands/git_stats"
+	"github.com/guionardo/gs-dev/internal/commands/install"
+	"github.com/guionardo/gs-dev/internal/commands/setup"
+	shellinit "github.com/guionardo/gs-dev/internal/commands/shell_init"
+	"github.com/guionardo/gs-dev/internal/commands/url"
 	"github.com/guionardo/gs-dev/internal/logging"
-	plugins_register "github.com/guionardo/gs-dev/plugins"
+
+	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
 
@@ -21,7 +30,7 @@ func main() {
 	flag.Parse()
 	logging.Setup(false, os.Stdout)
 
-	rootCmd := cmd.GetRootCmd([]string{}, plugins_register.GetRegisteredPlugins()...)
+	rootCmd := getRootCommand()
 	docsFolder, err := filepath.Abs(docsFolder)
 	if err != nil {
 		slog.Error("Failed to get docs folder", slog.String("folder", docsFolder), slog.Any("error", err))
@@ -40,4 +49,22 @@ func main() {
 		return
 	}
 	slog.Info("Documentation created", slog.String("folder", docsFolder))
+}
+
+func getRootCommand() *cobra.Command {
+	commandsManager, err := commands.NewCommandManager()
+	if err != nil {
+		log.Fatalf("Error creating commands manager: %v", err)
+	}
+
+	commandsManager.Register(
+		&shellinit.InitCommand{},
+		&dev.DevCommand{},
+		&fav.FavCommand{},
+		&gitstats.GitStatsCommand{},
+		&install.InstallCommand{},
+		&url.UrlCommand{},
+		&setup.SetupCommand{},
+	)
+	return commandsManager.GetRootCommand()
 }

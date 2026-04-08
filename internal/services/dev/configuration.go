@@ -1,8 +1,11 @@
 package devservice
 
 import (
+	"path"
+	"sort"
 	"time"
 
+	"github.com/guionardo/gs-dev/internal/fs_tools"
 	"github.com/guionardo/gs-dev/plugins/commons"
 )
 
@@ -16,9 +19,11 @@ type (
 		LastChosen      map[string]int `yaml:"last_chosen"`
 		MostChosenCount int            `yaml:"most_chosen_count" default:"5"`
 	}
+
 	Root struct {
-		Folders  []string `yaml:"folders"`
-		MaxDepth int      `yaml:"max_depth"`
+		Folders      []string               `yaml:"folders"`
+		MaxDepth     int                    `yaml:"max_depth"`
+		LocalConfigs map[string]LocalConfig `yaml:"local_configs"`
 	}
 	// RootsConfiguration is a map[rootPath]Root
 	RootsConfiguration map[string]Root
@@ -57,5 +62,65 @@ func (c *Root) Defaults() {
 
 	if c.Folders == nil {
 		c.Folders = make([]string, 0)
+	}
+
+	if c.LocalConfigs == nil {
+		c.LocalConfigs = make(map[string]LocalConfig)
+	}
+}
+
+func (r *Root) EfectiveIgnore(folder string) bool {
+	currentFolder := folder
+	level := 0
+
+	for !fs_tools.PathIsRoot(currentFolder) {
+		if localConfig, ok := r.LocalConfigs[folder]; ok && (localConfig.Ignore || (level > 0 && localConfig.IgnoreSubfolders)) {
+			return true
+		}
+
+		currentFolder = path.Dir(currentFolder)
+		level++
+	}
+
+	return false
+}
+
+func (r *Root) CanIncludeFolder(folder string) bool {
+	return !r.EfectiveIgnore(folder)
+}
+
+// Resync syncs the root with the local configs
+func (r *Root) Resync() {
+	changed := false
+
+	for folder, rootLocalConfig := range r.LocalConfigs {
+		if r.EfectiveIgnore(folder) {
+			continue
+		}
+
+		localConfig, err := NewLocalConfig(folder)
+		if err != nil {
+			delete(r.LocalConfigs, folder)
+
+			changed = true
+
+			continue
+		}
+
+		if rootLocalConfig.Equal(*localConfig) {
+			continue
+		}
+
+		changed = true
+		r.LocalConfigs[folder] = *localConfig
+	}
+
+	if changed {
+		r.Folders = make([]string, 0)
+		for folder := range r.LocalConfigs {
+			r.Folders = append(r.Folders, folder)
+		}
+
+		sort.Strings(r.Folders)
 	}
 }

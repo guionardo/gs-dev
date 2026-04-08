@@ -100,6 +100,8 @@ func (d *DevService) CanDeleteRoot(root string) bool {
 func (d *DevService) Sync() error {
 	roots := make(RootsConfiguration)
 
+	colors.Primary("Syncing %d roots\n", len(d.rootsConfig))
+
 	for directory, root := range d.rootsConfig {
 		err := syncRoot(directory, &root)
 		if err != nil {
@@ -113,6 +115,21 @@ func (d *DevService) Sync() error {
 	d.rootsConfig = roots
 
 	return d.saveConfig()
+}
+
+func (d *DevService) IsTimeToSync() bool {
+	return d.devConfig.LastSync.Add(d.devConfig.SyncInterval).Before(time.Now())
+}
+
+func (d *DevService) DoSyncIfNeeded() error {
+	if !d.IsTimeToSync() {
+		slog.Debug("Not time to sync", slog.String("last_sync", d.devConfig.LastSync.Format(time.RFC3339)))
+		return nil
+	}
+
+	slog.Debug("Time to sync", slog.String("last_sync", d.devConfig.LastSync.Format(time.RFC3339)))
+
+	return d.Sync()
 }
 
 func (d *DevService) GetRoots() ([]string, error) {
@@ -167,6 +184,10 @@ func (d *DevService) PurgeUnexistentRoots() (err error) {
 
 // RunFind finds the folders that match the words
 func (d *DevService) RunFind(words []string) (err error) {
+	if err = d.DoSyncIfNeeded(); err != nil {
+		return err
+	}
+
 	folders := d.GetFilteredFolders(words)
 	if len(folders) == 0 {
 		return fmt.Errorf("no folders found for %v", words)
@@ -174,7 +195,6 @@ func (d *DevService) RunFind(words []string) (err error) {
 
 	folder, err := dialog.Choose("Choose a folder:", (dialog.ToAnyArray(folders))...)
 	if err == nil {
-		colors.Success("Chosen folder: %s\n", folder)
 		d.ChosenFolder(folder)
 		postcommand.AddOutputLine("cd " + folder)
 	}
@@ -220,7 +240,6 @@ func (d *DevService) RunFavorites() (err error) {
 
 	folder, err := dialog.Choose("Choose a folder:", (dialog.ToAnyArray(folders))...)
 	if err == nil {
-		colors.Success("Chosen folder: %s\n", folder)
 		d.ChosenFolder(folder)
 		postcommand.AddOutputLine("cd " + folder)
 	}
@@ -234,8 +253,13 @@ func (d *DevService) Setup() error {
 
 func syncRoot(directory string, root *Root) error {
 	reader := NewRootReader(directory, root)
+	if root.LocalConfigs == nil {
+		root.LocalConfigs = make(map[string]LocalConfig)
+	}
 
-	removed, added := reader.SyncSummary()
+	removed, added := reader.SyncSummary(root.CanIncludeFolder)
+	defer root.Resync()
+
 	if len(removed) == 0 && len(added) == 0 {
 		colors.Normal("Root [%s] is up to date\n", directory)
 		return nil
@@ -246,10 +270,18 @@ func syncRoot(directory string, root *Root) error {
 
 	for _, project := range removed {
 		colors.Secondary("\t%s removed\n", project.Folder)
+		delete(root.LocalConfigs, project.Folder)
 	}
 
 	for _, project := range added {
 		colors.Success("\t%s added\n", project.String())
+
+		if _, ok := root.LocalConfigs[project.Folder]; !ok {
+			localConfig, err := NewLocalConfig(project.Folder)
+			if err == nil {
+				root.LocalConfigs[project.Folder] = *localConfig
+			}
+		}
 	}
 
 	return nil

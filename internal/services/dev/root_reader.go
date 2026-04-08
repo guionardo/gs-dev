@@ -64,15 +64,22 @@ func (r *RootReader) UpdateRoot(root *Root) {
 	sort.Strings(readenFolders)
 	root.Folders = readenFolders
 }
-func (r *RootReader) SyncSummary() (removed []*projectdetect.ProjectData, added []*projectdetect.ProjectData) {
+
+// SyncSummary returns the summary of the projects that have been removed and added
+// canIncludeFunc is a function that returns true if the folder should be included in the summary
+func (r *RootReader) SyncSummary(canIncludeFunc func(folder string) bool) (removed []*projectdetect.ProjectData, added []*projectdetect.ProjectData) {
 	for folder := range r.readenProjects {
+		if !canIncludeFunc(folder) {
+			continue
+		}
+
 		if _, ok := r.projects[folder]; !ok {
 			added = append(added, r.readenProjects[folder])
 		}
 	}
 
 	for folder := range r.projects {
-		if _, ok := r.readenProjects[folder]; !ok {
+		if _, ok := r.readenProjects[folder]; !ok || !canIncludeFunc(folder) {
 			removed = append(removed, r.projects[folder])
 		}
 	}

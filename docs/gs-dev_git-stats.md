@@ -1,16 +1,19 @@
-## gs-dev version
+## gs-dev git-stats
 
-Application version
+Show git stats
+
+### Synopsis
+
+arguments: [<repositoryRoot>] (default: current directory)
 
 ```
-gs-dev version [flags]
+gs-dev git-stats [flags]
 ```
 
 ### Options
 
 ```
-  -f, --full   Show full version information
-  -h, --help   help for version
+  -h, --help   help for git-stats
 ```
 
 ### Options inherited from parent commands

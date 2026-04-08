@@ -1,16 +1,15 @@
-## gs-dev version
+## gs-dev setup
 
-Application version
+Setup the application
 
 ```
-gs-dev version [flags]
+gs-dev setup [flags]
 ```
 
 ### Options
 
 ```
-  -f, --full   Show full version information
-  -h, --help   help for version
+  -h, --help   help for setup
 ```
 
 ### Options inherited from parent commands
