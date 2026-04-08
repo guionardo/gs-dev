@@ -6,13 +6,11 @@ import (
 	"time"
 
 	"github.com/guionardo/gs-dev/internal/fs_tools"
-	"github.com/guionardo/gs-dev/plugins/commons"
 )
 
 type (
 	DevConfiguration struct {
-		commons.PluginConfiguration
-
+		Enabled         bool           `yaml:"enabled" default:"true"`
 		LastSync        time.Time      `yaml:"last_sync"`
 		SyncInterval    time.Duration  `yaml:"sync_interval" default:"1h"`
 		DefaultMaxDepth int            `yaml:"default_max_depth" default:"3"`
