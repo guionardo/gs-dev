@@ -1,3 +1,4 @@
+// Package postcommand provides a way to run commands in the shell after the program exits.
 package postcommand
 
 import (
@@ -14,14 +15,15 @@ import (
 )
 
 type (
-	InitSetup struct {
-		toolName string
-		commands map[string]Command // command name -> command arguments
-	}
 	Command struct {
 		name      string
 		arguments string
 		useOutput bool
+	}
+
+	initSetup struct {
+		toolName string
+		commands map[string]Command // command name -> command arguments
 	}
 )
 
@@ -34,8 +36,8 @@ var (
 	postCommandOutputFile string
 )
 
-func NewInitSetup(toolName string, commands ...Command) *InitSetup {
-	is := &InitSetup{
+func NewInitSetup(toolName string, commands ...Command) *initSetup {
+	is := &initSetup{
 		toolName: toolName,
 		commands: make(map[string]Command),
 	}
@@ -54,7 +56,7 @@ func NewCommand(name string, useOutput bool, arguments ...string) Command {
 	}
 }
 
-func (i *InitSetup) GenerateInitSetup(toolBinaryPath string) ([]byte, error) {
+func (i *initSetup) GenerateInitSetup(toolBinaryPath string) ([]byte, error) {
 	if len(i.commands) == 0 {
 		return nil, errors.New("no commands to generate init setup")
 	}
@@ -79,16 +81,6 @@ func (i *InitSetup) GenerateInitSetup(toolBinaryPath string) ([]byte, error) {
 	} else {
 		tmpFileAttr = path.Join(os.TempDir(), i.toolName+"."+uuid.New().String())
 	}
-
-	// // write wrapper function
-	// content = fmt.Appendf(content, "%s() {\n", wrapperName)
-	// content = fmt.Appendf(content, "  use_output=(%s)\n", strings.Join(useOutputCommands, " "))
-	// content = fmt.Appendf(content, "  if [[ ${use_output[@]} =~ $1 ]]; then\n")
-	// content = fmt.Appendf(content, "    %s --output $tmp_file $@ && %s\n", toolBinaryPath, treatOutputFunctionName)
-	// content = fmt.Appendf(content, "  else\n")
-	// content = fmt.Appendf(content, "    %s $@ \n", toolBinaryPath)
-	// content = fmt.Appendf(content, "  fi\n")
-	// content = fmt.Appendf(content, "}\n")
 
 	// write treat output function
 	content = fmt.Appendf(content, "%s() {\n", treatOutputFunctionName)
@@ -122,7 +114,7 @@ func (i *InitSetup) GenerateInitSetup(toolBinaryPath string) ([]byte, error) {
 	return content, nil
 }
 
-func (i *InitSetup) UpdateRootCommand(rootCmd *cobra.Command) error {
+func (i *initSetup) UpdateRootCommand(rootCmd *cobra.Command) error {
 	// Check if flagOutput is already set
 	if rootCmd.PersistentFlags().Lookup(flagOutput) == nil {
 		rootCmd.PersistentFlags().StringVar(&postCommandOutputFile, flagOutput, "", "Output file for post command")

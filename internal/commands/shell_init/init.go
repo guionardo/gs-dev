@@ -41,5 +41,8 @@ func (i *InitCommand) GetCobraCommand() *cobra.Command {
 }
 
 func (i *InitCommand) GetTUICommand() func() error {
-	return nil
+	return func() error {
+		fmt.Println("Run this command to initialize the shell alias")
+		return nil
+	}
 }

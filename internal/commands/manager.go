@@ -140,12 +140,11 @@ func (c *CommandManager) GetRootCommand() *cobra.Command {
 }
 
 func (c *CommandManager) Run(cmd *cobra.Command, args []string) error {
-	var commandNames, commandDescriptions []string
+	var commandNames []string
 
 	for name := range c.commands {
 		if c.commands[name].GetCobraCommand() != nil {
 			commandNames = append(commandNames, name)
-			commandDescriptions = append(commandDescriptions, c.commands[name].GetDescription())
 		}
 	}
 

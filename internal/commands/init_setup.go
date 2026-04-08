@@ -8,9 +8,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/guionardo/gs-dev/app/build"
 	"github.com/guionardo/gs-dev/pkg/tools/files"
-	"github.com/spf13/cobra"
 )
 
 type InitSetup struct {
@@ -18,15 +16,9 @@ type InitSetup struct {
 	commands map[string]Command // command name -> command arguments
 }
 
-const (
-	flagOutput  = "post-command-output"
-	commandInit = "init2"
-)
+const flagOutput = "post-command-output"
 
-var (
-	postCommandOutputFile string
-	initSetupInstance     *InitSetup
-)
+var initSetupInstance *InitSetup
 
 func NewInitSetup(toolName string, commands ...Command) *InitSetup {
 	if initSetupInstance == nil {
@@ -103,43 +95,9 @@ func (i *InitSetup) GenerateInitSetup(toolBinaryPath string) ([]byte, error) {
 	}
 
 	// write command aliases
-	content = fmt.Appendf(content, "echo '%s is ready to use (%s)'\n", i.toolName, strings.Join(aliasCommands, ", "))
+	if len(aliasCommands) > 0 {
+		content = fmt.Appendf(content, "echo '%s is ready to use (%s)'\n", i.toolName, strings.Join(aliasCommands, ", "))
+	}
 
 	return content, nil
-}
-
-func (i *InitSetup) UpdateRootCommand(rootCmd *cobra.Command) error {
-	// Check if flagOutput is already set
-	if rootCmd.PersistentFlags().Lookup(flagOutput) == nil {
-		rootCmd.PersistentFlags().StringVar(&postCommandOutputFile, flagOutput, "", "Output file for post command")
-	}
-
-	for _, command := range rootCmd.Commands() {
-		if command.Name() == commandInit {
-			return fmt.Errorf("command %s already exists", commandInit)
-		}
-	}
-
-	initCmd := &cobra.Command{
-		Use:   commandInit,
-		Short: "Initialization for shell alias",
-		Long: fmt.Sprintf(`Add to your profile script (.bashrc, etc)
-
-		source <(%s %s)`, i.toolName, commandInit),
-		Hidden: true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			content, err := i.GenerateInitSetup(build.ExecutableName)
-			if err != nil {
-				return err
-			}
-
-			_, err = os.Stdout.Write(content)
-
-			return err
-		},
-	}
-
-	rootCmd.AddCommand(initCmd)
-
-	return nil
 }
