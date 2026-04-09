@@ -14,37 +14,17 @@ import (
 	"github.com/guionardo/gs-dev/internal/consts"
 	"github.com/guionardo/gs-dev/internal/dialog"
 	errs "github.com/guionardo/gs-dev/internal/errors"
+	"github.com/guionardo/gs-dev/internal/interfaces"
 	"github.com/guionardo/gs-dev/internal/logging"
+	installservice "github.com/guionardo/gs-dev/internal/services/install"
 	postcommand "github.com/guionardo/gs-dev/pkg/post_command"
 	"github.com/spf13/cobra"
 )
 
 type (
 	CommandManager struct {
-		commands   map[string]Command
+		commands   map[string]interfaces.Command
 		configFile *config.ConfigFile
-	}
-
-	Command interface {
-		// Initialize the command
-		Init()
-		Setup(configuration *config.ConfigFile) error
-		GetName() string
-		GetDescription() string
-
-		// if the command is a cobra command, it will be added to the root command
-		GetCobraCommand() *cobra.Command
-
-		// if the command is a TUI command, it will be added to the TUI command
-		GetTUICommand() func() error
-
-		// if the command has an init alias, it will be added to the init script
-		HasInitAlias() bool
-
-		// Use by the init alias
-		GetArguments() string
-
-		UsesOutput() bool
 	}
 )
 
@@ -58,12 +38,13 @@ func NewCommandManager() (*CommandManager, error) {
 	}
 
 	return &CommandManager{
-		commands:   make(map[string]Command),
+		commands:   make(map[string]interfaces.Command),
 		configFile: configFile,
 	}, nil
 }
 
-func (c *CommandManager) Register(commands ...Command) *CommandManager {
+func (c *CommandManager) Register(commands ...interfaces.Command) *CommandManager {
+	registeredCommands := make([]interfaces.Command, 0, len(commands))
 	for _, command := range commands {
 		command.Init()
 		c.commands[command.GetName()] = command
@@ -72,10 +53,12 @@ func (c *CommandManager) Register(commands ...Command) *CommandManager {
 		if err != nil {
 			slog.Error("Error setting up command", slog.String("command", command.GetName()), slog.Any("error", err))
 		}
+
+		registeredCommands = append(registeredCommands, command)
 	}
 
 	// Add the registered commands to the init setup
-	_ = NewInitSetup(build.AppName, commands...)
+	installservice.SetCommands(registeredCommands...)
 
 	return c
 }
@@ -88,8 +71,15 @@ func (c *CommandManager) GetRootCommand() *cobra.Command {
 		RunE:  c.Run,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			debug, _ := cmd.Flags().GetBool("debug")
+			if debug {
+				logging.PreSetupLog("Debug mode enabled", slog.LevelDebug)
+			}
 
-			logging.PreSetupLog("Debug mode enabled", slog.LevelDebug)
+			postCommandOutput, _ := cmd.Flags().GetString(consts.PostCommandOutputFlag)
+			if postCommandOutput != "" {
+				postcommand.SetOutputFile(postCommandOutput)
+			}
+
 			logging.Setup(debug, os.Stdout)
 		},
 		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
@@ -98,16 +88,11 @@ func (c *CommandManager) GetRootCommand() *cobra.Command {
 	}
 
 	rootCmd.PersistentFlags().Bool("debug", false, "Enable debug mode")
-
-	aliasCommands := []postcommand.Command{}
+	rootCmd.PersistentFlags().String(consts.PostCommandOutputFlag, "", "Output file for post command")
 
 	for _, command := range c.commands {
 		cmd := command.GetCobraCommand()
 		rootCmd.AddCommand(cmd)
-
-		if cmd.Annotations != nil && len(cmd.Annotations[consts.UseOutputAnnotation]) > 0 {
-			aliasCommands = append(aliasCommands, postcommand.NewCommand(command.GetName(), true, command.GetName()))
-		}
 	}
 
 	versionCmd := &cobra.Command{
@@ -129,12 +114,6 @@ func (c *CommandManager) GetRootCommand() *cobra.Command {
 	}
 	versionCmd.Flags().BoolP("full", "f", false, "Show full version information")
 	rootCmd.AddCommand(versionCmd)
-
-	initSetup := postcommand.NewInitSetup(build.AppName, aliasCommands...)
-	if err := initSetup.UpdateRootCommand(rootCmd); err != nil {
-		slog.Error("Error updating root command", slog.Any("error", err))
-		os.Exit(1)
-	}
 
 	return rootCmd
 }

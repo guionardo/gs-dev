@@ -6,11 +6,12 @@ import (
 )
 
 var (
-	AzureHTTPSRegex = regexp.MustCompile(`(?m)https://(.*)@dev.azure.com/(.*)/_git/(.*)`)
+	AzureHTTPSRegex = regexp.MustCompile(`(?m)https://(.*)@dev.azure.com/(.*)/(.*)/_git/(.*)`)
 	AzureSSHRegex   = regexp.MustCompile(`(?m)git@ssh.dev.azure.com:(v[0-9]{1,2})/(.*)/(.*)/(.*)`)
 )
 
 // gitAzureHttpUrlParser parses the url as a Azure HTTPS URL
+// https://[user]@dev.azure.com/[org|user]/[project]/_git/[repo] or git@ssh.dev.azure.com:v3/[user|org]/[project]/[repo]
 // https://CUSTOMER-SA@dev.azure.com/CUSTOMER-SA/CUSTOMER-NS/_git/metric-api -> https://dev.azure.com/CUSTOMER-SA/CUSTOMER-NS/_git/metric-api
 func gitAzureHttpUrlParser(url string) (string, error) {
 	matches := AzureHTTPSRegex.FindStringSubmatch(url)

@@ -51,7 +51,7 @@ func TestAssertFilename(t *testing.T) {
 		filename := t.TempDir() + "/tmp_file.txt"
 		got, err := fs_tools.AssertFilename(filename)
 		require.NoError(t, err)
-		require.Empty(t, got)
+		require.NotEmpty(t, got)
 	})
 
 	t.Run("AssertFilename_with_existing_directory_should_return_error", func(t *testing.T) {

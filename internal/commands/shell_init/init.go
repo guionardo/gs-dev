@@ -23,6 +23,7 @@ const (
 func (i *InitCommand) Init() {
 	i.InitCommandVariables(name, description, false, "", false)
 }
+
 func (i *InitCommand) Setup(configuration *config.ConfigFile) error {
 	i.installService = installservice.NewInstallService(configuration)
 

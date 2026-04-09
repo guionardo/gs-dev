@@ -7,7 +7,14 @@ import (
 
 const outputFilePermissions = 0600
 
-var outputContent []byte
+var (
+	outputContent         []byte
+	postCommandOutputFile string
+)
+
+func SetOutputFile(outputFile string) {
+	postCommandOutputFile = outputFile
+}
 
 func AddOutputLine(line string) {
 	outputContent = fmt.Appendf(outputContent, "%s\n", line)

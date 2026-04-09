@@ -44,16 +44,11 @@ func NewProfileFile(marker string) (pf ProfileFile, err error) {
 }
 
 func (pf *ProfileFile) DoBackup() (err error) {
-	pf.UpdateLastBackup()
-
-	lastBackupContent, err := os.ReadFile(pf.LastBackup)
-	if !os.IsNotExist(err) {
-		return
-	}
+	lastBackupContent := pf.getLastBackup()
 
 	currentProfile, err := os.ReadFile(pf.Path)
 	if err != nil {
-		return
+		return fmt.Errorf("error reading current profile file %s - %w", pf.Path, err)
 	}
 
 	if string(lastBackupContent) == string(currentProfile) {
@@ -69,14 +64,6 @@ func (pf *ProfileFile) DoBackup() (err error) {
 	}
 
 	return
-}
-
-func (pf *ProfileFile) UpdateLastBackup() {
-	previousBackups, err := filepath.Glob(pf.Path + ".*.bak")
-	if err == nil && len(previousBackups) > 0 {
-		slices.Sort(previousBackups)
-		pf.LastBackup = previousBackups[len(previousBackups)-1]
-	}
 }
 
 func (pf *ProfileFile) Save() error {
@@ -115,8 +102,7 @@ func (pf *ProfileFile) SetFeature(command string, enable bool) {
 	if len(pf.MarkerLines) > 0 {
 		// Enable just the last one
 		pf.Lines[pf.MarkerLines[len(pf.MarkerLines)-1]] = commandLine
-	} else {
-		// Add a new line
+	} else { // Add a new line
 		pf.Lines = append(pf.Lines, fmt.Sprintf("# %s set on %v",
 			strings.ReplaceAll(build.AppDescription, "\n", " "),
 			time.Now().Format(time.DateTime)), commandLine)
@@ -133,4 +119,25 @@ func (pf *ProfileFile) HasEnabledCommandLine() (int, bool) {
 	}
 
 	return 0, false
+}
+
+// getLastBackup returns the last backup file and its content if it exists
+func (pf *ProfileFile) getLastBackup() (backupFileContent []byte) {
+	previousBackups, _ := filepath.Glob(pf.Path + ".*.bak") //nolint:errcheck
+	if len(previousBackups) == 0 {
+		return nil
+	}
+
+	slices.Sort(previousBackups)
+	backupFile := previousBackups[len(previousBackups)-1]
+
+	backupFileContent, err := os.ReadFile(backupFile) //nolint:errcheck,gosec
+	if err == nil {
+		pf.LastBackup = backupFile
+		return backupFileContent
+	}
+
+	slog.Error("Error reading backup file", slog.String("backup", backupFile), slog.Any("error", err))
+
+	return nil
 }

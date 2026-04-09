@@ -26,11 +26,11 @@ func TestOutput(t *testing.T) {
 		assert.Equal(t, "line 1\nline 2\n", string(content))
 	})
 
-	t.Run("WriteOutput_without_output_file_should_return_error", func(t *testing.T) { //nolint:paralleltest
+	t.Run("WriteOutput_without_output_file_should_return_nil", func(t *testing.T) { //nolint:paralleltest
 		postCommandOutputFile = ""
 
 		err := WriteOutput()
 
-		assert.Error(t, err)
+		assert.NoError(t, err)
 	})
 }

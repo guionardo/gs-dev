@@ -33,11 +33,13 @@ func OpenURLInBrowser(url string) error {
 	cmd.Env = append(os.Environ(), extraEnvs...)
 
 	output, err := cmd.CombinedOutput()
-	slog.Debug("OpenURLInBrowser", slog.String("url", url), slog.String("output", string(output)), slog.String("error", err.Error()), slog.Any("extraEnvs", extraEnvs))
 
 	if err == nil || ignoreOpenBrowserCommandExitCode {
+		slog.Debug("OpenURLInBrowser succeeded", slog.String("url", url), slog.String("output", string(output)), slog.Any("extraEnvs", extraEnvs))
 		return nil
 	}
+
+	slog.Debug("OpenURLInBrowser failed", slog.String("url", url), slog.String("output", string(output)), slog.String("error", err.Error()), slog.Any("extraEnvs", extraEnvs))
 
 	return fmt.Errorf("failed to open URL in browser: %w", err)
 }
