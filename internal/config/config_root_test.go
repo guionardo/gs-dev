@@ -9,6 +9,35 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type (
+	ts1 struct {
+		Data1 string `yaml:"data1"`
+		Data2 int    `yaml:"data2"`
+	}
+	ts2 struct {
+		Data3 bool              `yaml:"data3"`
+		Data4 float64           `yaml:"data4"`
+		Data5 []string          `yaml:"data5"`
+		Data6 map[string]string `yaml:"data6"`
+	}
+	ts3 struct {
+		Data7 time.Time     `yaml:"data7"`
+		Data8 time.Duration `yaml:"data8"`
+	}
+)
+
+func (ts1) Key() string {
+	return "ts1"
+}
+
+func (ts2) Key() string {
+	return "ts2"
+}
+
+func (ts3) Key() string {
+	return "ts3"
+}
+
 func TestNewConfigFile(t *testing.T) {
 	t.Parallel()
 
@@ -47,23 +76,6 @@ func TestNewConfigFile(t *testing.T) {
 func TestGetSetValue(t *testing.T) {
 	t.Parallel()
 
-	type (
-		ts1 struct {
-			Data1 string `yaml:"data1"`
-			Data2 int    `yaml:"data2"`
-		}
-		ts2 struct {
-			Data3 bool              `yaml:"data3"`
-			Data4 float64           `yaml:"data4"`
-			Data5 []string          `yaml:"data5"`
-			Data6 map[string]string `yaml:"data6"`
-		}
-		ts3 struct {
-			Data7 time.Time     `yaml:"data7"`
-			Data8 time.Duration `yaml:"data8"`
-		}
-	)
-
 	cfg, err := NewConfigFile(t.TempDir() + "/config.yaml")
 	require.Error(t, err)
 
@@ -73,19 +85,19 @@ func TestGetSetValue(t *testing.T) {
 	value2 := ts2{Data3: true, Data4: 1.0, Data5: []string{"value1", "value2"}, Data6: map[string]string{"key1": "value1", "key2": "value2"}}
 	value3 := ts3{Data7: now, Data8: time.Second * 10}
 
-	cfg.SetValue("data1", value1)
-	cfg.SetValue("data2", value2)
-	cfg.SetValue("data3", value3)
+	SetValue(cfg, value1)
+	SetValue(cfg, value2)
+	SetValue(cfg, value3)
 
-	v1, err := GetValue[ts1](cfg, "data1")
+	v1, err := GetValue[ts1](cfg)
 	require.NoError(t, err)
 	require.Equal(t, ts1{Data1: "value1", Data2: 1}, v1)
 
-	v2, err := GetValue[ts2](cfg, "data2")
+	v2, err := GetValue[ts2](cfg)
 	require.NoError(t, err)
 	require.Equal(t, ts2{Data3: true, Data4: 1.0, Data5: []string{"value1", "value2"}, Data6: map[string]string{"key1": "value1", "key2": "value2"}}, v2)
 
-	v3, err := GetValue[ts3](cfg, "data3")
+	v3, err := GetValue[ts3](cfg)
 	require.NoError(t, err)
 	require.Equal(t, ts3{Data7: now, Data8: time.Second * 10}, v3)
 
@@ -94,15 +106,15 @@ func TestGetSetValue(t *testing.T) {
 	cfg2, err := NewConfigFile(cfg.fileName)
 	require.NoError(t, err)
 
-	v1, err = GetValue[ts1](cfg2, "data1")
+	v1, err = GetValue[ts1](cfg2)
 	require.NoError(t, err)
 	require.Equal(t, value1, v1)
 
-	v2, err = GetValue[ts2](cfg2, "data2")
+	v2, err = GetValue[ts2](cfg2)
 	require.NoError(t, err)
 	require.Equal(t, value2, v2)
 
-	v3, err = GetValue[ts3](cfg2, "data3")
+	v3, err = GetValue[ts3](cfg2)
 	require.NoError(t, err)
 	require.Equal(t, value3, v3)
 }

@@ -15,33 +15,40 @@ import (
 )
 
 type (
-	ConfigFile struct {
+	// ConfigRoot is an abstraction to group configurations by type
+	ConfigRoot struct {
 		fileName string
 		data     map[string]any
 	}
 	Defaulter interface {
 		Defaults()
 	}
+	ConfigType interface {
+		Key() string
+	}
+	Validater interface {
+		Validate() error
+	}
 )
 
-func NewConfigFile(filename string) (config *ConfigFile, err error) {
+func NewConfigFile(filename string) (config *ConfigRoot, err error) {
 	filename, err = fs_tools.AssertFilename(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	config = &ConfigFile{
+	config = &ConfigRoot{
 		fileName: filename,
 		data:     make(map[string]any),
 	}
 
-	content, err := os.ReadFile(filename)
+	content, err := os.ReadFile(filename) // nolint: gosec // file validated in the AssertFileName function
 	if errors.Is(err, fs.ErrNotExist) {
 		return config, errs.NewError(err, "file does not exist", true)
 	}
 
 	if err != nil {
-		return config, errs.NewError(err, "error reading file", false)
+		return config, errs.NewError(err, "error reading configuration file: %s", false, filename)
 	}
 
 	err = yaml.Unmarshal(content, &config.data)
@@ -52,7 +59,7 @@ func NewConfigFile(filename string) (config *ConfigFile, err error) {
 	return config, err
 }
 
-func (c ConfigFile) Save() (err error) {
+func (c ConfigRoot) Save() (err error) {
 	content, err := yaml.Marshal(c.data)
 	if err == nil {
 		err = os.WriteFile(c.fileName, content, consts.FilesPermissions)
@@ -61,22 +68,17 @@ func (c ConfigFile) Save() (err error) {
 	return err
 }
 
-func (c *ConfigFile) SetValue(key string, value any) {
-	c.data[key] = value
-}
+func GetValue[T ConfigType](config *ConfigRoot) (value T, err error) {
+	key := value.Key()
 
-func GetValue[T any](config *ConfigFile, key string) (value T, err error) {
 	v, ok := config.data[key]
 	if !ok {
-		slog.Debug("Key not found", slog.String("key", key))
-		return value, errs.NewError(fmt.Errorf("key %s not found", key), "key not found", false)
+		slog.Debug("Required configuration not found", slog.String("key", key))
+
+		return value, errs.NewError(nil, "key %s not found", false, key)
 	}
 
-	content, err := yaml.Marshal(v)
-	if err != nil {
-		slog.Warn("Error marshalling value", slog.Any("error", err), slog.Any("value", v), slog.String("type", fmt.Sprintf("%T", v)))
-		return value, fmt.Errorf("error marshalling value: %w", err)
-	}
+	content, _ := yaml.Marshal(v)
 
 	err = yaml.Unmarshal(content, &value)
 	if err != nil {
@@ -91,10 +93,13 @@ func GetValue[T any](config *ConfigFile, key string) (value T, err error) {
 		v.Defaults()
 	}
 
-	return value, nil
+	if v, ok := vAny.(Validater); ok {
+		err = v.Validate()
+	}
+
+	return value, err
 }
 
-func SetValue[T any](config *ConfigFile, key string, value T) (err error) {
-	config.data[key] = value
-	return nil
+func SetValue[T ConfigType](config *ConfigRoot, value T) {
+	config.data[value.Key()] = value
 }
