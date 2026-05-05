@@ -1,4 +1,4 @@
-package projectdetect
+package projectdetector
 
 import (
 	"os"
@@ -8,33 +8,30 @@ import (
 	"github.com/guionardo/gs-dev/pkg/tools/files"
 )
 
-type (
-	CargoTomlFile struct {
-		Package struct {
-			Name string
-		}
+type CargoTomlFile struct {
+	Package struct {
+		Name string
 	}
-)
+}
 
-func RustDetector(folder string) (projectType string, projectName string, err error) {
-	projectFile := files.FindFirst(folder, "Cargo.toml", "*.rs")
+func Rust(folder string) (project *ProjectData, err error) {
+	projectFile := files.FindFirst(folder, "Cargo.toml")
 	if projectFile == "" {
-		return "", "", os.ErrNotExist
+		return nil, os.ErrNotExist
 	}
 
-	projectName = getRustProjectName(projectFile)
+	projectName := getRustProjectName(projectFile)
 
-	return "rust", projectName, nil
+	return &ProjectData{
+		Folder: folder,
+		Type:   RustProjectType,
+		Name:   projectName,
+	}, nil
 }
 
 func getRustProjectName(projectFile string) string {
-	switch path.Base(projectFile) {
-	case "Cargo.toml":
-		if name := readRustProjectNameFromCargoToml(projectFile); name != "" {
-			return name
-		}
-	default:
-		return ""
+	if name := readRustProjectNameFromCargoToml(projectFile); name != "" {
+		return name
 	}
 
 	return ""

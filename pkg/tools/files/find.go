@@ -25,6 +25,18 @@ func FindFirst(root string, names ...string) string {
 	return ""
 }
 
+// TODO: add a FindFirstInSubdirs that searches for the first file in the root directory and its subdirectories up to a certain depth
+func FindFirstInSubdirs(root string, maxDepth int, names ...string) string {
+	for i := range names {
+		matches, err := filepath.Glob(path.Join(root, strings.Repeat("/*", maxDepth), names[i]))
+		if err == nil && len(matches) > 0 {
+			return matches[0]
+		}
+	}
+
+	return ""
+}
+
 // LocateBinary locates a binary in the PATH environment variable
 // and returns the path to the binary if found, otherwise returns an error
 func LocateBinary(binaryName string) (string, error) {

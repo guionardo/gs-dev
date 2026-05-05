@@ -1,11 +1,10 @@
-package projectdetect
+package projectdetector
 
 import (
 	"os"
 	"path"
 
 	"github.com/BurntSushi/toml"
-	"github.com/guionardo/gs-dev/pkg/tools/files"
 )
 
 type (
@@ -16,16 +15,7 @@ type (
 	}
 )
 
-func PythonDetector(folder string) (projectType string, projectName string, err error) {
-	projectFile := files.FindFirst(folder, "pyproject.toml", "requirements.txt", "*.py")
-	if projectFile == "" {
-		return "", "", os.ErrNotExist
-	}
-
-	projectName = getPythonProjectName(projectFile)
-
-	return "python", projectName, nil
-}
+var Python = NewSimpleDetector(PythonProjectType, []string{"pyproject.toml", "*.py"}, getPythonProjectName)
 
 // getPythonProjectName gets the project name from the project pyproject.toml or requirements.txt file
 // the project name is the name of the project in the pyproject.toml or basename of the path file

@@ -1,4 +1,4 @@
-package projectdetect
+package projectdetector
 
 import (
 	"encoding/xml"
@@ -8,15 +8,19 @@ import (
 	"github.com/guionardo/gs-dev/pkg/tools/files"
 )
 
-func JavaDetector(folder string) (projectType string, projectName string, err error) {
+func Java(folder string) (project *ProjectData, err error) {
 	projectFile := files.FindFirst(folder, "pom.xml", "build.gradle", "*.java")
 	if projectFile == "" {
-		return "", "", os.ErrNotExist
+		return nil, os.ErrNotExist
 	}
 
-	projectName = getJavaProjectName(projectFile)
+	projectName := getJavaProjectName(projectFile)
 
-	return "java", projectName, nil
+	return &ProjectData{
+		Folder: folder,
+		Type:   JavaProjectType,
+		Name:   projectName,
+	}, nil
 }
 
 func getJavaProjectName(projectFile string) string {

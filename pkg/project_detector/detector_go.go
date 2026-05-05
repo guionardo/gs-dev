@@ -1,4 +1,4 @@
-package projectdetect
+package projectdetector
 
 import (
 	"bufio"
@@ -9,15 +9,20 @@ import (
 	"github.com/guionardo/gs-dev/pkg/tools/files"
 )
 
-func GoDetector(folder string) (projectType string, projectName string, err error) {
-	projectFile := files.FindFirst(folder, "go.mod", "*.go")
+// Go detects if the given folder is a Go project by looking for go.mod or main.go files.
+func Go(folder string) (project *ProjectData, err error) {
+	projectFile := files.FindFirst(folder, "go.mod")
 	if projectFile == "" {
-		return "", "", os.ErrNotExist
+		return nil, os.ErrNotExist
 	}
 
-	projectName = getGoProjectName(projectFile)
+	projectName := getGoProjectName(projectFile)
 
-	return "go", projectName, nil
+	return &ProjectData{
+		Folder: folder,
+		Type:   GoProjectType,
+		Name:   projectName,
+	}, nil
 }
 
 func getGoProjectName(projectFile string) string {
