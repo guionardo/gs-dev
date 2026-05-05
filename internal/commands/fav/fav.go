@@ -1,9 +1,11 @@
 package fav
 
 import (
+	"errors"
+
+	"github.com/guionardo/gs-dev/internal/cli"
 	"github.com/guionardo/gs-dev/internal/commands"
 	"github.com/guionardo/gs-dev/internal/config"
-	"github.com/guionardo/gs-dev/internal/consts"
 	devservice "github.com/guionardo/gs-dev/internal/services/dev"
 	"github.com/spf13/cobra"
 )
@@ -20,29 +22,18 @@ type FavCommand struct {
 }
 
 func (f *FavCommand) Init() {
-	f.InitCommandVariables(name, description, true, "", true)
+	f.InitCommandVariables(name, description, f, f.setup).WithInitAlias().WithOutput()
 }
 
-func (f *FavCommand) Setup(configuration *config.ConfigFile) error {
+func (f *FavCommand) setup(configuration *config.ConfigRoot) error {
 	f.service = devservice.NewService(configuration)
-	return f.service.PurgeUnexistentRoots()
+	return errors.Join(f.service.PurgeUnexistentRoots(), f.service.PurgeUnexistentFavorites())
 }
 
-func (f *FavCommand) GetCobraCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   name,
-		Short: description,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return f.service.RunFavorites()
-		},
-		Annotations: map[string]string{
-			consts.UseOutputAnnotation: "true",
-		},
-	}
+func (f *FavCommand) BuildCommand() *cobra.Command {
+	return cli.GenerateCobraCommand(&FavStruct{}, name, description, "", true)
 }
 
 func (f *FavCommand) GetTUICommand() func() error {
-	return func() error {
-		return f.service.RunFavorites()
-	}
+	return f.service.RunFavorites
 }

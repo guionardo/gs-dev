@@ -16,6 +16,7 @@ import (
 	"github.com/guionardo/go/flow"
 	timetools "github.com/guionardo/go/time_tools"
 	"github.com/guionardo/gs-dev/internal/consts"
+	errs "github.com/guionardo/gs-dev/internal/errors"
 	string_tools "github.com/guionardo/gs-dev/internal/tools/strings_tools"
 	"github.com/spf13/cobra"
 )
@@ -39,6 +40,7 @@ type (
 		persistent   bool
 		required     bool
 		validate     bool
+		stdin        bool
 	}
 	mapFlags map[int]flagMetadata
 )
@@ -128,6 +130,20 @@ func GenerateCobraCommand(instance CommandStruct, name, usage, longDescription s
 			continue
 		}
 
+		// stdin
+		found, err := parseStdinTag(field)
+		if err != nil {
+			panic(fmt.Sprintf("GenerateCobraCommand: %v", err))
+		}
+
+		if found {
+			flagsMap[fieldIndex] = flagMetadata{
+				fieldIndex: fieldIndex,
+				stdin:      true,
+			}
+
+			continue
+		}
 		// Args
 		if found, expectedCount, description, err := parseArgsTag(field); found {
 			if err != nil {
@@ -160,6 +176,19 @@ func GenerateCobraCommand(instance CommandStruct, name, usage, longDescription s
 	cmd.Annotations = annotations
 
 	return cmd
+}
+
+func parseStdinTag(field reflect.StructField) (found bool, err error) {
+	if stdin := field.Tag.Get("stdin"); stdin == "" {
+		return false, nil
+	}
+	// Check if the field is a slice of bytes
+	if field.Type.Kind() != reflect.Slice || field.Type.Elem().Kind() != reflect.Uint8 {
+		err = fmt.Errorf("field %s.%s has an 'stdin' tag but is not a slice of bytes", field.Type.Name(), field.Name)
+		return
+	}
+
+	return true, nil
 }
 
 // parseArgsTag parses the `args` struct tag and returns the expected argument count and description.
@@ -386,9 +415,18 @@ func parseArgsAndFlags(instance CommandStruct, cmd *cobra.Command, args []string
 			}
 
 		case reflect.Slice:
-			if flagField.Type().Elem().Kind() == reflect.String {
+			switch flagField.Type().Elem().Kind() {
+			case reflect.String:
 				if valueSlice, err := cmd.Flags().GetStringSlice(flag.name); err == nil {
 					valueSliceVal := reflect.ValueOf(valueSlice)
+					flagField.Set(valueSliceVal)
+				}
+			case reflect.Uint8:
+				// reader := cmd.InOrStdin()
+
+				stdInData, err := ReadFromStdIn()
+				if err == nil {
+					valueSliceVal := reflect.ValueOf(stdInData)
 					flagField.Set(valueSliceVal)
 				}
 			}
@@ -447,4 +485,20 @@ func validateTypeCobraStruct(instance CommandStruct) reflect.Type {
 	}
 
 	return t.Elem()
+}
+
+func ReadFromStdIn() (content []byte, err error) {
+	stat, err := os.Stdin.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		// Data is being piped
+		content, err = io.ReadAll(os.Stdin)
+	} else {
+		err = errs.NewError(nil, "no data in stdin", false)
+	}
+
+	return
 }

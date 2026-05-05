@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/guionardo/gs-dev/internal/cli"
 	"github.com/guionardo/gs-dev/internal/colors"
 	"github.com/guionardo/gs-dev/internal/commands"
 	"github.com/guionardo/gs-dev/internal/config"
-	"github.com/guionardo/gs-dev/internal/consts"
 	"github.com/guionardo/gs-dev/internal/dialog"
 	devservice "github.com/guionardo/gs-dev/internal/services/dev"
 	"github.com/spf13/cobra"
@@ -39,68 +39,16 @@ const (
 )
 
 func (d *DevCommand) Init() {
-	d.InitCommandVariables(name, description, true, "", true)
+	d.InitCommandVariables(name, description, d, d.setupFunc).WithDefaultArgument(findCommand).WithInitAlias().WithOutput()
 }
-func (d *DevCommand) Setup(configuration *config.ConfigFile) error {
+func (d *DevCommand) setupFunc(configuration *config.ConfigRoot) error {
 	d.service = devservice.NewService(configuration)
 
 	return d.service.PurgeUnexistentRoots()
 }
 
-func (d *DevCommand) GetCobraCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   name,
-		Short: description,
-		Long:  "arguments: <command> (can be add, delete, sync, list) or a query string to find a folder",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return cmd.Help()
-			}
-
-			return d.service.RunFind(args)
-		},
-		Annotations: map[string]string{
-			consts.UseOutputAnnotation: "true",
-		},
-	}
-	addCmd := &cobra.Command{
-		Use:   "add",
-		Short: addDescription,
-		Long:  "arguments: <folder> (can be a relative, absolute and ~ resolved paths)",
-		RunE:  d.addRoot,
-		Args:  cobra.ExactArgs(1),
-	}
-	deleteCmd := &cobra.Command{
-		Use:   "delete",
-		Short: deleteDescription,
-		Long:  "arguments: <folder> (can be a relative, absolute and ~ resolved paths)",
-		RunE:  d.deleteRoot,
-		Args:  cobra.ExactArgs(1),
-	}
-	syncCmd := &cobra.Command{
-		Use:   "sync",
-		Short: syncDescription,
-		RunE:  d.syncRoots,
-		Args:  cobra.ExactArgs(0),
-	}
-	listCmd := &cobra.Command{
-		Use:   "list",
-		Short: listDescription,
-		RunE:  d.listRoots,
-	}
-	setupCmd := &cobra.Command{
-		Use:   "setup",
-		Short: setupDescription,
-		RunE:  d.setup,
-	}
-
-	cmd.AddCommand(addCmd)
-	cmd.AddCommand(deleteCmd)
-	cmd.AddCommand(syncCmd)
-	cmd.AddCommand(listCmd)
-	cmd.AddCommand(setupCmd)
-
-	return cmd
+func (d *DevCommand) BuildCommand() *cobra.Command {
+	return cli.GenerateCobraCommand(&DevStruct{}, name, description, "", true)
 }
 
 func (d *DevCommand) GetTUICommand() func() error {
@@ -166,37 +114,4 @@ func (d *DevCommand) GetTUICommand() func() error {
 
 		return nil
 	}
-}
-
-func (d *DevCommand) addRoot(cmd *cobra.Command, args []string) error {
-	cmd.Println("Adding folder to roots")
-
-	root, err := d.service.CanAddRoot(args[0])
-	if err != nil {
-		return err
-	}
-
-	return d.service.AddRoot(root)
-}
-
-func (d *DevCommand) deleteRoot(cmd *cobra.Command, args []string) error {
-	cmd.Println("Deleting folder from roots")
-
-	if !d.service.CanDeleteRoot(args[0]) {
-		return fmt.Errorf("root %s not registered", args[0])
-	}
-
-	return d.service.DeleteRoot(args[0])
-}
-
-func (d *DevCommand) syncRoots(cmd *cobra.Command, args []string) error {
-	return d.service.Sync()
-}
-
-func (d *DevCommand) listRoots(cmd *cobra.Command, args []string) error {
-	return d.service.ListRoots()
-}
-
-func (d *DevCommand) setup(cmd *cobra.Command, args []string) error {
-	return d.service.Setup()
 }

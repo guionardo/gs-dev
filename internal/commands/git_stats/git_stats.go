@@ -1,6 +1,7 @@
 package gitstats
 
 import (
+	"github.com/guionardo/gs-dev/internal/cli"
 	"github.com/guionardo/gs-dev/internal/commands"
 	"github.com/guionardo/gs-dev/internal/config"
 	gitstats "github.com/guionardo/gs-dev/internal/services/git"
@@ -19,9 +20,9 @@ const (
 )
 
 func (g *GitStatsCommand) Init() {
-	g.InitCommandVariables(name, description, false, "", false)
+	g.InitCommandVariables(name, description, g, g.setup)
 }
-func (g *GitStatsCommand) Setup(configuration *config.ConfigFile) error {
+func (g *GitStatsCommand) setup(configuration *config.ConfigRoot) error {
 	g.service = gitstats.NewGitService()
 	return nil
 }
@@ -33,25 +34,12 @@ func (g *GitStatsCommand) GetName() string {
 func (g *GitStatsCommand) GetDescription() string {
 	return description
 }
-
-func (g *GitStatsCommand) GetCobraCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   name,
-		Short: description,
-		Long:  "arguments: [<repositoryRoot>] (default: current directory)",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			repositoryRoot := "."
-			if len(args) > 0 {
-				repositoryRoot = args[0]
-			}
-
-			return g.service.GetGitStats(repositoryRoot)
-		},
-	}
+func (d *GitStatsCommand) BuildCommand() *cobra.Command {
+	return cli.GenerateCobraCommand(&GitStatsStruct{}, name, description, "", false)
 }
 
 func (g *GitStatsCommand) GetTUICommand() func() error {
 	return func() error {
-		return g.service.GetGitStats(".")
+		return g.service.GetGitStats(".", nil)
 	}
 }

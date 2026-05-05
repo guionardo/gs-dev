@@ -12,6 +12,7 @@ import (
 	"github.com/guionardo/gs-dev/internal/colors"
 	"github.com/guionardo/gs-dev/internal/config"
 	"github.com/guionardo/gs-dev/internal/consts"
+	"github.com/guionardo/gs-dev/internal/context"
 	"github.com/guionardo/gs-dev/internal/dialog"
 	errs "github.com/guionardo/gs-dev/internal/errors"
 	"github.com/guionardo/gs-dev/internal/interfaces"
@@ -21,12 +22,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type (
-	CommandManager struct {
-		commands   map[string]interfaces.Command
-		configFile *config.ConfigFile
-	}
-)
+type CommandManager struct {
+	commands   map[string]interfaces.Command
+	configRoot *config.ConfigRoot
+}
 
 func NewCommandManager() (*CommandManager, error) {
 	configFile, err := config.NewConfigFile(path.Join(config.GetConfigDir(), "config.json"))
@@ -39,7 +38,7 @@ func NewCommandManager() (*CommandManager, error) {
 
 	return &CommandManager{
 		commands:   make(map[string]interfaces.Command),
-		configFile: configFile,
+		configRoot: configFile,
 	}, nil
 }
 
@@ -49,9 +48,13 @@ func (c *CommandManager) Register(commands ...interfaces.Command) *CommandManage
 		command.Init()
 		c.commands[command.GetName()] = command
 
-		err := command.Setup(c.configFile)
-		if err != nil {
-			slog.Error("Error setting up command", slog.String("command", command.GetName()), slog.Any("error", err))
+		err := command.Setup(c.configRoot)
+		if er, ok := errors.AsType[errs.Error](err); ok && er.IsRecoverable() {
+			slog.Debug("Error setting up", slog.String("command", command.GetName()), slog.Any("error", err))
+			continue
+		} else if err != nil {
+			slog.Error("Error setting up", slog.String("command", command.GetName()), slog.Any("error", err))
+			continue
 		}
 
 		registeredCommands = append(registeredCommands, command)
@@ -80,6 +83,12 @@ func (c *CommandManager) GetRootCommand() *cobra.Command {
 				postcommand.SetOutputFile(postCommandOutput)
 			}
 
+			ctxData := context.CommandContextData{
+				RootConfig: c.configRoot,
+				Debug:      debug,
+			}
+			ctx := context.GetCommandContext(cmd.Context(), ctxData)
+			cmd.SetContext(ctx)
 			logging.Setup(debug, os.Stdout)
 		},
 		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
@@ -91,8 +100,11 @@ func (c *CommandManager) GetRootCommand() *cobra.Command {
 	rootCmd.PersistentFlags().String(consts.PostCommandOutputFlag, "", "Output file for post command")
 
 	for _, command := range c.commands {
-		cmd := command.GetCobraCommand()
-		rootCmd.AddCommand(cmd)
+		err := command.Setup(c.configRoot)
+		if err == nil {
+			cmd := command.GetCobraCommand()
+			rootCmd.AddCommand(cmd)
+		}
 	}
 
 	versionCmd := &cobra.Command{
