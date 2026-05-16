@@ -178,21 +178,3 @@ func Setup(output io.Writer) {
 
 	preSetupLogs = nil
 }
-
-func getCaller(args ...any) []any {
-	if !logDebug {
-		return args
-	}
-
-	var source, callerFunc string
-
-	pc, file, line, ok := runtime.Caller(2)
-	if ok {
-		source = fmt.Sprintf("%s:%d", file, line)
-		callerFunc = runtime.FuncForPC(pc).Name()
-
-		args = append(args, slog.String("source", source), slog.String("caller", callerFunc))
-	}
-
-	return args
-}
