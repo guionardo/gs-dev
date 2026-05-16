@@ -4,27 +4,30 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"os"
 	"sort"
+	"strings"
 	"time"
 
 	pathtools "github.com/guionardo/go/path_tools"
-	"github.com/guionardo/gs-dev/internal/colors"
 	"github.com/guionardo/gs-dev/internal/config"
 	"github.com/guionardo/gs-dev/internal/dialog"
 	findpattern "github.com/guionardo/gs-dev/internal/find_pattern"
 	"github.com/guionardo/gs-dev/internal/fs_tools"
-	projectdetect "github.com/guionardo/gs-dev/internal/project_detect"
+	"github.com/guionardo/gs-dev/internal/logging"
+	"github.com/guionardo/gs-dev/pkg/console"
 	postcommand "github.com/guionardo/gs-dev/pkg/post_command"
+	projectdetect "github.com/guionardo/gs-dev/pkg/project_detector"
 )
 
 type DevService struct {
-	configFile  *config.ConfigFile
+	configFile  *config.ConfigRoot
 	devConfig   *DevConfiguration
 	rootsConfig RootsConfiguration
 }
 
-func NewService(configuration *config.ConfigFile) *DevService {
-	roots, err := config.GetValue[RootsConfiguration](configuration, "roots")
+func NewService(configuration *config.ConfigRoot) *DevService {
+	roots, err := config.GetValue[RootsConfiguration](configuration)
 	if err != nil {
 		slog.Warn("Error getting roots configuration", "error", err)
 	}
@@ -33,7 +36,7 @@ func NewService(configuration *config.ConfigFile) *DevService {
 		roots = make(RootsConfiguration)
 	}
 
-	devConfig, err := config.GetValue[DevConfiguration](configuration, "dev")
+	devConfig, err := config.GetValue[DevConfiguration](configuration)
 	if err != nil {
 		slog.Warn("Error getting dev configuration", "error", err)
 	}
@@ -48,8 +51,8 @@ func NewService(configuration *config.ConfigFile) *DevService {
 }
 
 func (d *DevService) saveConfig() error {
-	d.configFile.SetValue("dev", d.devConfig)
-	d.configFile.SetValue("roots", d.rootsConfig)
+	config.SetValue(d.configFile, d.devConfig)
+	config.SetValue(d.configFile, d.rootsConfig)
 
 	return d.configFile.Save()
 }
@@ -99,11 +102,10 @@ func (d *DevService) CanDeleteRoot(root string) bool {
 
 func (d *DevService) Sync() error {
 	roots := make(RootsConfiguration)
-
-	colors.Primary("Syncing %d roots\n", len(d.rootsConfig))
+	tree := console.NewTree("Syncing roots")
 
 	for directory, root := range d.rootsConfig {
-		err := syncRoot(directory, &root)
+		err := syncRoot(directory, &root, tree)
 		if err != nil {
 			return err
 		}
@@ -113,6 +115,8 @@ func (d *DevService) Sync() error {
 
 	d.devConfig.LastSync = time.Now()
 	d.rootsConfig = roots
+
+	_ = tree.Write(os.Stdout)
 
 	return d.saveConfig()
 }
@@ -147,36 +151,71 @@ func (d *DevService) ListRoots() error {
 		return err
 	}
 
+	tree := console.NewTree("Roots")
 	for _, root := range roots {
-		colors.Primary("\nRoot: %s\n", root)
+		node := tree.Root.AddChild(console.Styled(root, console.Yellow+" "+console.Bold))
 
 		for _, folder := range d.rootsConfig[root].Folders {
 			project, err := projectdetect.DetectProject(folder)
 			if err == nil {
-				colors.Secondary("\t %s\n", project.String())
+				node.AddChild(strings.ReplaceAll(project.ColoredString(), root, "..."))
 			}
 		}
 	}
 
-	return nil
+	return tree.Write(os.Stdout)
 }
 
 func (d *DevService) PurgeUnexistentRoots() (err error) {
 	deleted := false
+	tree := console.NewTree("Root purging")
 
 	for root := range d.rootsConfig {
 		if !pathtools.DirExists(root) {
-			slog.Info("Purging unexistent root", slog.String("directory", root))
+			tree.AddChild(console.Styled(root, "red"))
 			delete(d.rootsConfig, root)
+
+			deleted = true
+
+			continue
+		}
+
+		folders := d.rootsConfig[root]
+		if folders.Resync() {
+			tree.AddChild(console.Styled(root, "green"))
 
 			deleted = true
 		}
 	}
 
 	if deleted {
+		if err = d.saveConfig(); err != nil {
+			tree.AddChild(console.Styled("error: "+err.Error(), "yellow"))
+		}
+
+		tree.Write(os.Stdout)
+	}
+
+	return err
+}
+
+func (d *DevService) PurgeUnexistentFavorites() (err error) {
+	deleted := false
+
+	for n := range d.devConfig.LastChosen {
+		if !pathtools.DirExists(n) {
+			delete(d.devConfig.LastChosen, n)
+
+			deleted = true
+
+			logging.Info("Purging unexistent favorite", slog.String("folder", n))
+		}
+	}
+
+	if deleted {
 		err = d.saveConfig()
 
-		slog.Info("Roots purged")
+		logging.Info("Favorites purged")
 	}
 
 	return err
@@ -226,7 +265,9 @@ func (d *DevService) RunFavorites() (err error) {
 
 	lastChosen := make([]string, 0, len(d.devConfig.LastChosen))
 	for folder, count := range d.devConfig.LastChosen {
-		lastChosen = append(lastChosen, fmt.Sprintf("%06d%s", count, folder))
+		if pathtools.DirExists(folder) {
+			lastChosen = append(lastChosen, fmt.Sprintf("%06d%s", count, folder))
+		}
 	}
 	// Sort by count descending
 	sort.Slice(lastChosen, func(i, j int) bool {
@@ -251,7 +292,7 @@ func (d *DevService) Setup() error {
 	return nil
 }
 
-func syncRoot(directory string, root *Root) error {
+func syncRoot(directory string, root *Root, tree *console.Tree) error {
 	reader := NewRootReader(directory, root)
 	if root.LocalConfigs == nil {
 		root.LocalConfigs = make(map[string]LocalConfig)
@@ -261,20 +302,21 @@ func syncRoot(directory string, root *Root) error {
 	defer root.Resync()
 
 	if len(removed) == 0 && len(added) == 0 {
-		colors.Normal("Root [%s] is up to date\n", directory)
+		tree.AddChild(console.Styled("[%s] is uptodate", console.Blue, directory))
 		return nil
 	}
 
 	reader.UpdateRoot(root)
-	colors.Primary("Root [%s] has %d changes:\n", directory, len(removed)+len(added))
+
+	node := tree.AddChild(console.Styled("[%s] has %d changes", console.Green, directory, len(removed)+len(added)))
 
 	for _, project := range removed {
-		colors.Secondary("\t%s removed\n", project.Folder)
+		node.AddChild(console.Styled("%s removed", console.Yellow, project.Folder))
 		delete(root.LocalConfigs, project.Folder)
 	}
 
 	for _, project := range added {
-		colors.Success("\t%s added\n", project.String())
+		node.AddChild(console.Styled("%s added", console.Green, project.String()))
 
 		if _, ok := root.LocalConfigs[project.Folder]; !ok {
 			localConfig, err := NewLocalConfig(project.Folder)

@@ -16,5 +16,5 @@ func TestNewLocalConfig(t *testing.T) {
 	lc, err := devservice.NewLocalConfig(projectFolder)
 	require.NoError(t, err)
 
-	require.Equal(t, "Guiosoft Development Assistant", lc.Description)
+	require.Equal(t, "go", lc.ProjectType)
 }

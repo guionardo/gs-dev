@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package pad;
+
+option go_package = "github.com/guionardo/gs-dev/internal/pad/proto";
+
+// PadService defines the gRPC service for managing pads, including creating, retrieving, and deleting pads. Each method corresponds to a specific operation on the pads, allowing clients to interact with the pad management system effectively.
+service PadService {
+  // CreatePad creates a new pad with the specified content, TTL, and metadata. The response includes the unique ID of the created pad and its status.
+  rpc CreatePad(CreatePadRequest) returns (CreatedPadResponse);
+  // GetPad retrieves the content and metadata of a pad by its unique ID. The response includes the pad's body, metadata, and status.
+  rpc GetPad(PadRequest) returns (PadResponse);
+  // DeletePad deletes a pad by its unique ID. The response indicates whether the pad was successfully deleted or if it was not found.
+  rpc DeletePad(PadRequest) returns (PadResponse);
+}
+
+// PadStatus represents the status of a pad, indicating whether it is active, expired, not found, or deleted. This status helps clients understand the current state of a pad when retrieving or managing it.
+enum PadStatus {
+  ACTIVE    = 0;
+  EXPIRED   = 1;
+  NOT_FOUND = 2;
+  DELETED = 3;
+}
+
+// PadRequest is used to retrieve or delete a pad by its unique ID. The optional API key can be included for authentication and authorization purposes, allowing the system to associate pads with specific users and enforce access controls.
+message PadRequest {
+  string id = 1;
+  string api_key = 2; // Optional API key for authentication and authorization purposes. This can be used to associate pads with specific users and enforce access controls.
+}
+
+// PadResponse is returned when retrieving or deleting a pad. It includes the content of the pad, any associated metadata, and the status of the pad (active, expired, not found, or deleted). This information helps clients understand the current state of the pad and its content when performing operations on it.
+message PadResponse {
+  // The content of the pad, which can be any binary data (e.g., text, images, etc.)
+  bytes body = 1;
+  // Optional metadata for the pad, which can include any key-value pairs (e.g., author, creation date, etc.)
+  map<string, string> metadata = 2;
+  // The status of the pad, indicating whether it is active, expired, or not found.
+  PadStatus status = 3;
+}
+
+// CreatePadRequest is used to create a new pad with the specified content, TTL, and metadata. The response includes the unique ID of the created pad and its status.
+message CreatePadRequest {
+    // The content of the pad, which can be any binary data (e.g., text, images, etc.)
+  bytes body = 1;
+
+    // The time-to-live (TTL) for the pad in seconds. After this duration, the pad will be automatically deleted. 0 means no expiration.
+  uint32 ttl_seconds = 2;
+
+    // Optional metadata for the pad, which can include any key-value pairs (e.g., author, creation date, etc.)
+  map<string, string> metadata = 3;
+  string api_key = 4; // Optional API key for authentication and authorization purposes. This can be used to associate pads with specific users and enforce access controls.
+}
+
+// CreatedPadResponse is returned when a pad is successfully created. It includes the unique ID of the created pad and its status.
+message CreatedPadResponse {
+  string    id          = 1;
+  PadStatus status      = 2;
+  uint64    valid_until = 3; // Timestamp (in seconds since epoch) until which the pad is valid. 0 means no expiration.
+}

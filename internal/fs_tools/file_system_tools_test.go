@@ -1,7 +1,9 @@
 package fs_tools_test
 
 import (
+	"fmt"
 	"os"
+	"path"
 	"testing"
 
 	"github.com/guionardo/gs-dev/internal/consts"
@@ -29,6 +31,32 @@ func TestAssertDirectory(t *testing.T) {
 		got, err := fs_tools.AssertDirectory(dir + "/tmp_dir")
 		require.Error(t, err)
 		require.Empty(t, got)
+	})
+
+	t.Run("AssertDirectory_with_$HOME_should_get_current_home", func(t *testing.T) {
+		t.Parallel()
+
+		firstDir, err := getFirstDirectoryInHome(t)
+		if err != nil {
+			return
+		}
+
+		got, err := fs_tools.AssertDirectory("$HOME/" + path.Base(firstDir))
+		require.NoError(t, err)
+		require.Equal(t, firstDir, got)
+	})
+
+	t.Run("AssertDirectory_with_~_should_get_current_home", func(t *testing.T) {
+		t.Parallel()
+
+		firstDir, err := getFirstDirectoryInHome(t)
+		if err != nil {
+			return
+		}
+
+		got, err := fs_tools.AssertDirectory("~/" + path.Base(firstDir))
+		require.NoError(t, err)
+		require.Equal(t, firstDir, got)
 	})
 }
 
@@ -70,4 +98,28 @@ func TestAssertFilename(t *testing.T) {
 		require.Error(t, err)
 		require.Empty(t, got)
 	})
+}
+
+func getFirstDirectoryInHome(t *testing.T) (string, error) {
+	t.Helper()
+
+	home, err := os.UserHomeDir()
+	if err == nil {
+		var entries []os.DirEntry
+
+		entries, err = os.ReadDir(home)
+		if err == nil {
+			for _, entry := range entries {
+				if entry.IsDir() {
+					return path.Join(home, entry.Name()), nil
+				}
+			}
+
+			err = fmt.Errorf("no directories found in %s", home)
+		}
+	}
+
+	t.Skipf("Failed to get HOME directory - %v", err)
+
+	return "", err
 }

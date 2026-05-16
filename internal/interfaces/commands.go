@@ -8,7 +8,7 @@ import (
 type Command interface {
 	// Initialize the command
 	Init()
-	Setup(configuration *config.ConfigFile) error
+	Setup(configuration *config.ConfigRoot) error
 	GetName() string
 	GetDescription() string
 

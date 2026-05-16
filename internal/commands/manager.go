@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"os"
-	"path"
 	"sort"
 
 	"github.com/guionardo/gs-dev/app/build"
@@ -28,7 +26,7 @@ type CommandManager struct {
 }
 
 func NewCommandManager() (*CommandManager, error) {
-	configFile, err := config.NewConfigFile(path.Join(config.GetConfigDir(), "config.json"))
+	configFile, err := config.NewConfigRoot(config.GetConfigDir())
 
 	if recErr, ok := errors.AsType[errs.Error](err); ok {
 		if !recErr.IsRecoverable() {
@@ -50,10 +48,10 @@ func (c *CommandManager) Register(commands ...interfaces.Command) *CommandManage
 
 		err := command.Setup(c.configRoot)
 		if er, ok := errors.AsType[errs.Error](err); ok && er.IsRecoverable() {
-			slog.Debug("Error setting up", slog.String("command", command.GetName()), slog.Any("error", err))
+			logging.Debug("Error setting up", slog.String("command", command.GetName()), slog.Any("error", err))
 			continue
 		} else if err != nil {
-			slog.Error("Error setting up", slog.String("command", command.GetName()), slog.Any("error", err))
+			logging.Error("Error setting up", slog.String("command", command.GetName()), slog.Any("error", err))
 			continue
 		}
 
@@ -67,17 +65,12 @@ func (c *CommandManager) Register(commands ...interfaces.Command) *CommandManage
 }
 
 func (c *CommandManager) GetRootCommand() *cobra.Command {
-	rootCmd := &cobra.Command{
+	rootCmd := &cobra.Command{ //TODO: Adicionar descrições ao commando principal
 		Use:   "gs-dev",
 		Short: "gs-dev",
 		Long:  "gs-dev",
 		RunE:  c.Run,
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
-			debug, _ := cmd.Flags().GetBool("debug")
-			if debug {
-				logging.PreSetupLog("Debug mode enabled", slog.LevelDebug)
-			}
-
 			postCommandOutput, _ := cmd.Flags().GetString(consts.PostCommandOutputFlag)
 			if postCommandOutput != "" {
 				postcommand.SetOutputFile(postCommandOutput)
@@ -85,19 +78,19 @@ func (c *CommandManager) GetRootCommand() *cobra.Command {
 
 			ctxData := context.CommandContextData{
 				RootConfig: c.configRoot,
-				Debug:      debug,
 			}
 			ctx := context.GetCommandContext(cmd.Context(), ctxData)
 			cmd.SetContext(ctx)
-			logging.Setup(debug, os.Stdout)
+			logging.Logger(cmd.OutOrStdout())
 		},
 		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
 			return postcommand.WriteOutput()
 		},
 	}
 
-	rootCmd.PersistentFlags().Bool("debug", false, "Enable debug mode")
 	rootCmd.PersistentFlags().String(consts.PostCommandOutputFlag, "", "Output file for post command")
+	rootCmd.PersistentFlags().Bool("debug", false, "enable debug")
+	_ = rootCmd.PersistentFlags().MarkHidden("debug")
 
 	for _, command := range c.commands {
 		err := command.Setup(c.configRoot)

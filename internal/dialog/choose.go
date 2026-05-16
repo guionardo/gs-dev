@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey/v2"
+	string_tools "github.com/guionardo/gs-dev/internal/tools/strings_tools"
 )
 
 type ChooseItem struct {
@@ -72,17 +73,12 @@ func Choose(label string, options ...ChooseItem) (answer string, err error) {
 func ToAnyArray(items []string) []ChooseItem {
 	chooseItems := make([]ChooseItem, len(items))
 	for index, option := range items {
-		words := strings.SplitN(option, ":", 2) //nolint:mnd // split the option into two parts
-
-		var description string
-		if len(words) > 1 {
-			description = strings.TrimSpace(words[1])
-			option = words[0]
-		}
+		var optionName, description string
+		string_tools.SplitString(option, ":", &optionName, &description)
 
 		chooseItems[index] = ChooseItem{
-			Name:        option,
-			Description: description,
+			Name:        optionName,
+			Description: strings.TrimSpace(description),
 		}
 	}
 

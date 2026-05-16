@@ -5,11 +5,10 @@ import (
 	"os"
 	"path"
 
-	pathtools "github.com/guionardo/go/path_tools"
 	"github.com/guionardo/gs-dev/app/build"
 	"github.com/guionardo/gs-dev/internal/consts"
 	"github.com/guionardo/gs-dev/internal/fs_tools"
-	"github.com/guionardo/gs-dev/internal/project_detect/detector"
+	projectdetector "github.com/guionardo/gs-dev/pkg/project_detector"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -42,10 +41,6 @@ func NewLocalConfig(directory string) (*LocalConfig, error) {
 
 // Parse tries to parse the local config file or detect configuration from the directory
 func (c *LocalConfig) Parse() error {
-	if !pathtools.DirExists(c.directory) {
-		return os.ErrNotExist
-	}
-
 	filename, err := fs_tools.AssertFilename(path.Join(c.directory, defaultConfigFile))
 	if err == nil {
 		// Try to parse the local config file
@@ -63,63 +58,34 @@ func (c *LocalConfig) Parse() error {
 
 	// Update project informations from the detected projects if not set in the config file
 	if c.ProjectType == "" || c.ProjectName == "" || c.Description == "" {
-		projects, err := detector.Detect(c.directory, 30)
-		if err == nil && len(projects) > 0 {
-			chosenProject := projects[0]
-
-			slog.Debug("Parsing project informations", slog.String("directory", c.directory))
-
-			for _, prj := range projects {
-				if prj.Confidence > chosenProject.Confidence {
-					chosenProject = prj
-				}
-
-				slog.Debug(
-					"Project detected",
-					slog.String("project", prj.Name),
-					slog.Float64("confidence", prj.Confidence),
-					slog.String("type", prj.Type),
-					slog.String("description", prj.Description),
-				)
-			}
-
-			if c.ProjectType == "" {
-				c.ProjectType = chosenProject.Type
-			}
-
-			if c.ProjectName == "" {
-				c.ProjectName = chosenProject.Name
-			}
-
-			if c.Description == "" {
-				c.Description = chosenProject.Description
-			}
-
-			if !c.hasConfigFile {
-				return nil
-			}
-			// Update description from the config file
-			content, err := yaml.Marshal(c)
-			if err == nil {
-				err = os.WriteFile(filename, content, consts.FilesPermissions)
-			}
-
-			if err != nil {
-				slog.Error("Error updating description from config file",
-					slog.String("directory", c.directory),
-					slog.Any("error", err))
-			}
+		projectData, err := projectdetector.DetectProject(c.directory)
+		if err == nil {
+			slog.Debug("Project detected",
+				slog.String("project", projectData.Name),
+				slog.String("type", projectData.Type),
+				slog.String("description", projectData.Description))
+			c.ProjectName = projectData.Name
+			c.ProjectType = projectData.Type
+			c.Description = projectData.Description
 		}
 	}
 
-	return nil
-}
-
-func (c *LocalConfig) ParseDescription() {
-	projects, err := detector.Detect(c.directory, 10)
-	if err == nil && len(projects) > 0 {
-		c.Description = projects[0].Description
+	if !c.hasConfigFile {
+		return nil
 	}
+	// Update description from the config file
+	content, err := yaml.Marshal(c)
+	if err == nil {
+		err = os.WriteFile(filename, content, consts.FilesPermissions)
+	}
+
+	if err != nil {
+		slog.Error("Error updating description from config file",
+			slog.String("directory", c.directory),
+			slog.Any("error", err))
+	}
+
+	return nil
 }
 
 func (c *LocalConfig) HasConfigFile() bool {

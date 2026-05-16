@@ -12,15 +12,18 @@ import (
 	errs "github.com/guionardo/gs-dev/internal/errors"
 )
 
+var homeDir string
+
+func init() {
+	homeDir, _ = os.UserHomeDir()
+}
+
 // AssertDirectory asserts that the path is a directory and returns the absolute path
 func AssertDirectory(path string) (string, error) {
-	if strings.HasPrefix(path, "~/") {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "", errs.NewError(err, "error getting user home directory", false)
+	for _, homeTmp := range []string{"~/", "$HOME/"} {
+		if after, ok := strings.CutPrefix(path, homeTmp); ok {
+			path = filepath.Join(homeDir, after)
 		}
-
-		path = filepath.Join(home, strings.TrimPrefix(path, "~/"))
 	}
 
 	if !pathtools.DirExists(path) {

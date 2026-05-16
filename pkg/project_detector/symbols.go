@@ -1,5 +1,7 @@
 package projectdetector
 
+import "github.com/guionardo/gs-dev/pkg/console"
+
 // symbols and color styles inspired by https://starship.rs/config
 
 const (
@@ -15,13 +17,6 @@ const (
 	OSMacOS   = "os_macos"
 	OSWindows = "os_windows"
 	OSUnknown = "os_unknown"
-
-	White  = "white"
-	Cyan   = "cyan"
-	Yellow = "yellow"
-	Green  = "green"
-	Red    = "red"
-	Blue   = "blue"
 )
 
 var symbols = map[string]string{
@@ -84,10 +79,10 @@ var symbols = map[string]string{
 }
 
 var styles = map[string]string{
-	GoProjectType:     Cyan,
-	PythonProjectType: Yellow,
-	JSProjectType:     Green,
-	RustProjectType:   Red,
-	JavaProjectType:   Red,
-	DotnetProjectType: Blue,
+	GoProjectType:     console.Cyan,
+	PythonProjectType: console.Yellow,
+	JSProjectType:     console.Green,
+	RustProjectType:   console.Red,
+	JavaProjectType:   console.Red,
+	DotnetProjectType: console.Blue,
 }

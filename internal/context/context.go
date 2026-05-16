@@ -11,7 +11,6 @@ type (
 	// CommandContextData holds the data that will be passed to the command execution context
 	CommandContextData struct {
 		RootConfig *config.ConfigRoot
-		Debug      bool
 	}
 
 	contextKey string

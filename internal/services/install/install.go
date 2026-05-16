@@ -24,7 +24,7 @@ type (
 
 var commandsMap map[string]interfaces.Command
 
-func NewInstallService(configuration *config.ConfigFile) *InstallService {
+func NewInstallService(configuration *config.ConfigRoot) *InstallService {
 	sourceCommand := fmt.Sprintf("source <(%s init)", build.ExecutableName)
 
 	return &InstallService{

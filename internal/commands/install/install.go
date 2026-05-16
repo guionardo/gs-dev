@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/guionardo/gs-dev/app/build"
+	"github.com/guionardo/gs-dev/internal/cli"
 	"github.com/guionardo/gs-dev/internal/colors"
 	"github.com/guionardo/gs-dev/internal/commands"
 	"github.com/guionardo/gs-dev/internal/config"
@@ -24,34 +25,16 @@ const (
 )
 
 func (i *InstallCommand) Init() {
-	i.InitCommandVariables(name, description, false, "", false)
+	i.InitCommandVariables(name, description, i, i.setup)
 }
-func (i *InstallCommand) Setup(configuration *config.ConfigFile) error {
+func (i *InstallCommand) setup(configuration *config.ConfigRoot) error {
 	i.service = installservice.NewInstallService(configuration)
 
 	return nil
 }
 
-func (i *InstallCommand) GetCobraCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   name,
-		Short: description,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			uninstall, err := cmd.Flags().GetBool("uninstall")
-			if err != nil {
-				return err
-			}
-
-			if uninstall {
-				return i.service.Uninstall()
-			}
-
-			return i.service.Install()
-		},
-	}
-	cmd.Flags().BoolP("uninstall", "u", false, "Uninstall bindings")
-
-	return cmd
+func (i *InstallCommand) BuildCommand() *cobra.Command {
+	return cli.GenerateCobraCommand(&InstallStruct{}, name, description, "", false)
 }
 
 func (i *InstallCommand) GetTUICommand() func() error {

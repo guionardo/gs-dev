@@ -53,6 +53,18 @@ func (c *DevConfiguration) Defaults() {
 	}
 }
 
+func (c DevConfiguration) Key() string {
+	return "dev"
+}
+
+func (c DevConfiguration) Validate() error {
+	return nil // TODO: Implementar validação
+}
+
+func (c *Root) Validate() error {
+	return nil
+}
+
 func (c *Root) Defaults() {
 	if c.MaxDepth < 1 {
 		c.MaxDepth = DefaultMaxDepth
@@ -88,9 +100,7 @@ func (r *Root) CanIncludeFolder(folder string) bool {
 }
 
 // Resync syncs the root with the local configs
-func (r *Root) Resync() {
-	changed := false
-
+func (r *Root) Resync() (changed bool) {
 	for folder, rootLocalConfig := range r.LocalConfigs {
 		if r.EfectiveIgnore(folder) {
 			continue
@@ -121,4 +131,15 @@ func (r *Root) Resync() {
 
 		sort.Strings(r.Folders)
 	}
+
+	return changed
+}
+
+func (rc RootsConfiguration) Key() string {
+	return "roots"
+}
+
+func (rc RootsConfiguration) Validate() error {
+	//TODO: Implementar validação
+	return nil
 }

@@ -1,11 +1,10 @@
-package logging_test
+package logging
 
 import (
 	"bytes"
 	"log/slog"
 	"testing"
 
-	"github.com/guionardo/gs-dev/internal/logging"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,17 +13,17 @@ func TestLogging(t *testing.T) {
 
 	output := bytes.NewBufferString("")
 
-	logging.PreSetupLog("Pre setup log - debug", slog.LevelDebug)
-	logging.PreSetupLog("Pre setup log - info", slog.LevelInfo)
-	logging.PreSetupLog("Pre setup log - warn", slog.LevelWarn)
-	logging.PreSetupLog("Pre setup log - error", slog.LevelError)
+	_ = Logger("--debug", output)
 
-	logging.Setup(true, output)
+	Debug("Pre setup log - debug")
+	Info("Pre setup log - info")
+	Warn("Pre setup log - warn")
+	Error("Pre setup log - error")
 
-	slog.Info("Test logging", slog.String("test", "info"))
-	slog.Debug("Test logging", slog.String("test", "debug"))
-	slog.Warn("Test logging", slog.String("test", "warn"))
-	slog.Error("Test logging", slog.String("test", "error"))
+	Info("Test logging", slog.String("test", "info"))
+	Debug("Test logging", slog.String("test", "debug"))
+	Warn("Test logging", slog.String("test", "warn"))
+	Error("Test logging", slog.String("test", "error"))
 
 	assert.Contains(t, output.String(), "Pre setup log - debug")
 	assert.Contains(t, output.String(), "Pre setup log - info")

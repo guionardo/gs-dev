@@ -9,6 +9,7 @@ import (
 	"github.com/guionardo/gs-dev/internal/commands"
 	"github.com/guionardo/gs-dev/internal/config"
 	"github.com/guionardo/gs-dev/internal/dialog"
+	"github.com/guionardo/gs-dev/internal/interfaces"
 	devservice "github.com/guionardo/gs-dev/internal/services/dev"
 	"github.com/spf13/cobra"
 )
@@ -38,13 +39,16 @@ const (
 	setupDescription  = "Setup the current folder configuration"
 )
 
+var _ interfaces.Command = &DevCommand{}
+
 func (d *DevCommand) Init() {
 	d.InitCommandVariables(name, description, d, d.setupFunc).WithDefaultArgument(findCommand).WithInitAlias().WithOutput()
 }
+
 func (d *DevCommand) setupFunc(configuration *config.ConfigRoot) error {
 	d.service = devservice.NewService(configuration)
 
-	return d.service.PurgeUnexistentRoots()
+	return nil
 }
 
 func (d *DevCommand) BuildCommand() *cobra.Command {

@@ -1,8 +1,8 @@
 package config
 
 import (
-	"io/fs"
 	"os"
+	"path"
 	"testing"
 	"time"
 
@@ -30,54 +30,66 @@ func (ts1) Key() string {
 	return "ts1"
 }
 
+func (ts1) Validate() error {
+	return nil
+}
+
 func (ts2) Key() string {
 	return "ts2"
 }
 
+func (ts2) Validate() error {
+	return nil
+}
 func (ts3) Key() string {
 	return "ts3"
 }
 
+func (ts3) Validate() error {
+	return nil
+}
 func TestNewConfigFile(t *testing.T) {
 	t.Parallel()
 
 	t.Run("NewConfigFile_with_existing_file_should_return_config", func(t *testing.T) {
 		t.Parallel()
 
-		filename := t.TempDir() + "/config.yaml"
-		_ = os.WriteFile(filename, []byte("test: value"), 0600)
+		configDir := t.TempDir()
+		_ = os.WriteFile(path.Join(configDir, "ts1.yml"), []byte("data1: value"), 0600)
 
-		config, err := NewConfigFile(filename)
+		config, err := NewConfigRoot(configDir)
 		require.NoError(t, err)
-		require.Equal(t, "value", config.data["test"])
+		value, err := GetValue[ts1](config)
+		require.NoError(t, err)
+		require.Equal(t, "value", value.Data1)
 	})
 
 	t.Run("NewConfigFile_with_non_existing_file_should_return_config_with_empty_data", func(t *testing.T) {
 		t.Parallel()
 
-		config, err := NewConfigFile("non_existing_file.yaml")
+		_, err := NewConfigRoot("non_existing_file")
 		require.Error(t, err)
-		require.ErrorIs(t, err, fs.ErrNotExist)
-		require.NotNil(t, config.data)
 	})
 
 	t.Run("NewConfigFile_with_invalid_file_should_return_error", func(t *testing.T) {
 		t.Parallel()
 
-		filename := t.TempDir() + "/config.yaml"
-		_ = os.WriteFile(filename, []byte("invalid- value"), 0600)
+		configDir := t.TempDir()
+		_ = os.WriteFile(path.Join(configDir, "ts1.yml"), []byte("invalid- value"), 0600)
 
-		config, err := NewConfigFile(filename)
+		config, err := NewConfigRoot(configDir)
+		require.NoError(t, err)
+
+		_, err = GetValue[ts1](config)
 		require.Error(t, err)
-		require.NotNil(t, config.data)
 	})
 }
 
 func TestGetSetValue(t *testing.T) {
 	t.Parallel()
 
-	cfg, err := NewConfigFile(t.TempDir() + "/config.yaml")
-	require.Error(t, err)
+	cfg, err := NewConfigRoot(t.TempDir())
+	require.NoError(t, err)
 
 	now := time.Now().UTC().Round(time.Second)
 
@@ -103,7 +115,7 @@ func TestGetSetValue(t *testing.T) {
 
 	require.NoError(t, cfg.Save())
 
-	cfg2, err := NewConfigFile(cfg.fileName)
+	cfg2, err := NewConfigRoot(cfg.configDir)
 	require.NoError(t, err)
 
 	v1, err = GetValue[ts1](cfg2)

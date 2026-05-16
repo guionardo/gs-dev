@@ -21,16 +21,16 @@ const (
 )
 
 func (i *InitCommand) Init() {
-	i.InitCommandVariables(name, description, false, "", false)
+	i.InitCommandVariables(name, description, i, i.setup)
 }
 
-func (i *InitCommand) Setup(configuration *config.ConfigFile) error {
+func (i *InitCommand) setup(configuration *config.ConfigRoot) error {
 	i.installService = installservice.NewInstallService(configuration)
 
 	return nil
 }
 
-func (i *InitCommand) GetCobraCommand() *cobra.Command {
+func (i *InitCommand) BuildCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   name,
 		Short: description,

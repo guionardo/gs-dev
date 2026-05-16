@@ -1,12 +1,10 @@
 package devservice
 
 import (
-	"iter"
-	"os"
-	"path"
 	"sort"
 
-	projectdetect "github.com/guionardo/gs-dev/internal/project_detect"
+	projectdetect "github.com/guionardo/gs-dev/pkg/project_detector"
+	"github.com/guionardo/gs-dev/pkg/tools/files"
 )
 
 type RootReader struct {
@@ -33,18 +31,10 @@ func NewRootReader(directory string, root *Root) *RootReader {
 
 	// Existing projects
 	readenProjects := make(map[string]*projectdetect.ProjectData)
-	for project := range readFolder(directory, 0, root.MaxDepth) {
-		readenProjects[project.Folder] = project
-	}
 
-	// Remove folders that are not projects
-	for folder := range readenProjects {
-		// Get the parent folder
-		parentFolder := path.Dir(folder)
-		if parentProject, ok := readenProjects[parentFolder]; ok {
-			if parentProject.ProjectType == projectdetect.UNKNOWN {
-				delete(readenProjects, parentFolder)
-			}
+	for dir := range files.ReadDirectory(directory, root.MaxDepth) {
+		if project, err := projectdetect.DetectProject(dir); err == nil {
+			readenProjects[project.Folder] = project
 		}
 	}
 
@@ -85,43 +75,4 @@ func (r *RootReader) SyncSummary(canIncludeFunc func(folder string) bool) (remov
 	}
 
 	return removed, added
-}
-
-func readFolder(folder string, level, maxDepth int) iter.Seq[*projectdetect.ProjectData] {
-	return func(yield func(*projectdetect.ProjectData) bool) {
-		if level >= maxDepth {
-			return
-		}
-
-		if level > 0 {
-			project, err := projectdetect.DetectProject(folder)
-			if err != nil {
-				return
-			}
-
-			if project.HasAtLeastOneFile {
-				yield(project)
-				return
-			}
-		}
-
-		if level == maxDepth {
-			return
-		}
-
-		entries, err := os.ReadDir(folder)
-		if err != nil {
-			return
-		}
-
-		for _, file := range entries {
-			if file.IsDir() {
-				for project := range readFolder(path.Join(folder, file.Name()), level+1, maxDepth) {
-					if !yield(project) {
-						return
-					}
-				}
-			}
-		}
-	}
 }

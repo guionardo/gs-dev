@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 
 	urlparsers "github.com/guionardo/gs-dev/internal/git/url_parsers"
+	"github.com/guionardo/gs-dev/internal/logging"
 )
 
 func GetRemoteHttpURL(folderName string) (string, error) {
@@ -46,14 +49,14 @@ func getRepositoryRoot(folderName string) (root string, err error) {
 		stat, err = os.Stat(path.Join(root, ".git"))
 		if err == nil && stat.IsDir() {
 			if stat, err = os.Stat(path.Join(root, ".git", "config")); err != nil || stat.IsDir() {
-				slog.Debug("repository doesn´t have a .git/config file", slog.String("folder", root))
+				logging.Debug("repository doesn´t have a .git/config file", slog.String("folder", root))
 				err = fmt.Errorf("repository root doesn´t have a .git/config file - %s", root)
 
 				return "", err
 			}
 
 			if level > 0 {
-				slog.Debug("repository root found on parent folder", slog.String("folder", root))
+				logging.Debug("repository root found on parent folder", slog.String("folder", root))
 			}
 
 			return
@@ -66,4 +69,23 @@ func getRepositoryRoot(folderName string) (root string, err error) {
 	err = fmt.Errorf("repository root not found for %s", folderName)
 
 	return
+}
+
+func getCurrentBranch(folderName string) (string, error) {
+	root, err := getRepositoryRoot(folderName)
+	if err != nil {
+		return "", err
+	}
+
+	cmd := exec.Command("git", "branch", "--show-current")
+	cmd.Dir = root
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("failed to get current branch - %w", err)
+	}
+
+	branch := strings.TrimSuffix(string(output), "\n")
+
+	return branch, nil
 }

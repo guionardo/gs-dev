@@ -18,15 +18,17 @@ const (
 	description = "Setup the application"
 )
 
+// TODO: Implementar subcomando SHOW para listar todas as configurações
+
 func (s *SetupCommand) Init() {
-	s.InitCommandVariables(name, description, false, "", false)
+	s.InitCommandVariables(name, description, s, s.setup)
 }
-func (s *SetupCommand) Setup(configuration *config.ConfigFile) error {
+func (s *SetupCommand) setup(configuration *config.ConfigRoot) error {
 	s.configService = configservice.NewConfigService(configuration)
 	return nil
 }
 
-func (s *SetupCommand) GetCobraCommand() *cobra.Command {
+func (s *SetupCommand) BuildCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   name,
 		Short: description,

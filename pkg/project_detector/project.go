@@ -2,9 +2,8 @@ package projectdetector
 
 import (
 	"fmt"
-	"strings"
 
-	"github.com/fatih/color"
+	"github.com/guionardo/gs-dev/pkg/console"
 )
 
 type (
@@ -30,33 +29,8 @@ func (pd ProjectData) String() string {
 func (pd ProjectData) ColoredString() string {
 	style, ok := styles[pd.Type]
 	if !ok {
-		style = White
+		style = console.White
 	}
 
-	return fmt.Sprintf("%s %s: %s - %s", styled(pd.Symbol(), style), styled(pd.Type, style+" bold"), pd.Name, pd.Folder)
-}
-
-func styled(text, style string) string {
-	var c *color.Color
-
-	switch {
-	case strings.Contains(style, Cyan):
-		c = color.New(color.FgCyan)
-	case strings.Contains(style, Red):
-		c = color.New(color.FgRed)
-	case strings.Contains(style, Green):
-		c = color.New(color.FgGreen)
-	case strings.Contains(style, Yellow):
-		c = color.New(color.FgYellow)
-	case strings.Contains(style, Blue):
-		c = color.New(color.FgBlue)
-	default:
-		c = color.New(color.FgWhite)
-	}
-
-	if strings.Contains(style, "bold") {
-		c.Add(color.Bold)
-	}
-
-	return c.Sprint(text)
+	return fmt.Sprintf("%s %s: %s - %s", console.Styled(pd.Symbol(), style), console.Styled(pd.Type, style+" bold"), pd.Name, pd.Folder)
 }

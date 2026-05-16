@@ -8,17 +8,17 @@ import (
 )
 
 type ConfigService struct {
-	configFile *config.ConfigFile
+	configFile *config.ConfigRoot
 }
 
-func NewConfigService(configFile *config.ConfigFile) *ConfigService {
+func NewConfigService(configFile *config.ConfigRoot) *ConfigService {
 	return &ConfigService{
 		configFile: configFile,
 	}
 }
 
 func (c *ConfigService) EditConfig() error {
-	devConfig, err := config.GetValue[devservice.DevConfiguration](c.configFile, "dev")
+	devConfig, err := config.GetValue[devservice.DevConfiguration](c.configFile)
 	if err != nil {
 		return err
 	}
@@ -32,9 +32,9 @@ func (c *ConfigService) EditConfig() error {
 	devConfig.DefaultMaxDepth = cfg.DefaultMaxDepth
 	devConfig.MostChosenCount = cfg.MostChosenCount
 
-	config.SetValue(c.configFile, "dev", devConfig)
+	config.SetValue(c.configFile, devConfig)
 
-	if err = config.SetValue(c.configFile, "dev", devConfig); err != nil {
+	if err = c.configFile.Save(); err != nil {
 		colors.Error("Error saving config: %v", err)
 		return err
 	}

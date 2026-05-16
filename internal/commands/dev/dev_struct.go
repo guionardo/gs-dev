@@ -69,23 +69,18 @@ func (ac *AddCommandStruct) Run(ctx context.Context, output io.Writer) error {
 }
 
 func (dc *DeleteCommandStruct) Run(ctx context.Context, output io.Writer) error {
-	_, _ = fmt.Fprintln(output, "Deleting folder from roots")
-
 	return dc.service.DeleteRoot(dc.Args[0])
 }
 
 func (sc *SyncCommandStruct) Run(ctx context.Context, output io.Writer) error {
-	_, _ = fmt.Fprintln(output, "Running sync command")
 	return sc.service.Sync()
 }
 
 func (lc *ListCommandStruct) Run(ctx context.Context, output io.Writer) error {
-	_, _ = fmt.Fprintln(output, "Running list command")
 	return lc.service.ListRoots()
 }
 
 func (fc *FindCommandStruct) Run(ctx context.Context, output io.Writer) error {
-	_, _ = fmt.Fprintln(output, "Running find command")
 	return fc.service.RunFind(fc.Args)
 }
 

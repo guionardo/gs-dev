@@ -423,7 +423,6 @@ func parseArgsAndFlags(instance CommandStruct, cmd *cobra.Command, args []string
 				}
 			case reflect.Uint8:
 				// reader := cmd.InOrStdin()
-
 				stdInData, err := ReadFromStdIn()
 				if err == nil {
 					valueSliceVal := reflect.ValueOf(stdInData)
