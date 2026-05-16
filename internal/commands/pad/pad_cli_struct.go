@@ -41,7 +41,7 @@ type (
 		basePadCliStruct
 
 		Filename string        `flag:"filename,f" description:"existing file to create a pad."`
-		StdIn    bool          `flag:"stdin" description:"Read data from std in (pipe)`
+		StdIn    bool          `flag:"stdin" description:"Read data from std in (pipe)"`
 		TTL      time.Duration `flag:"ttl" description:"time to live of the pad"`
 		Headers  []string      `flag:"header" description:"header=value"`
 		// Body     []byte        `stdin:"true"`
@@ -112,7 +112,9 @@ func (cp *PadCliPostStruct) Run(ctx context.Context, output io.Writer) (err erro
 	if cp.StdIn {
 		content, err = cli.ReadFromStdIn()
 	} else if cp.Filename != "" {
-		file, err := os.Open(cp.Filename)
+		var file *os.File
+
+		file, err = os.Open(cp.Filename)
 		if err != nil {
 			return errors.NewError(err, "failed to open file: %s", false, cp.Filename)
 		}
@@ -174,7 +176,7 @@ func (cp *PadCliSetupStruct) Run(ctx context.Context, output io.Writer) error {
 
 	if cp.Show {
 		_, _ = fmt.Fprintf(output, `PAD CLI SETUP
-		
+
 Enabled = %v
 Backend URL = %s
 API Key = %s`, cfg.Enabled, cfg.BackendURL, cfg.APIKey)

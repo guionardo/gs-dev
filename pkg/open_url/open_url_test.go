@@ -1,4 +1,3 @@
-// Package openurl provides a function to open a URL in the default browser.
 package openurl
 
 import (

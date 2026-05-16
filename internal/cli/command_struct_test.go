@@ -31,7 +31,7 @@ type (
 		Args []string `args:"-1,description for args"` // -1 means at least 1 argument
 	}
 	SampleConfig struct {
-		text string
+		text string //nolint: unused
 	}
 )
 
