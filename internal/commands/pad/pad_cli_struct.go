@@ -7,13 +7,14 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"strings"
 	"time"
 
 	"github.com/guionardo/gs-dev/internal/cli"
 	ctxdata "github.com/guionardo/gs-dev/internal/context"
 	"github.com/guionardo/gs-dev/internal/errors"
 	padservice "github.com/guionardo/gs-dev/internal/services/pad"
+	string_tools "github.com/guionardo/gs-dev/internal/tools/strings_tools"
+	"github.com/guionardo/gs-dev/pkg/console"
 )
 
 type (
@@ -135,10 +136,9 @@ func (cp *PadCliPostStruct) Run(ctx context.Context, output io.Writer) (err erro
 	headers["mime-type"] = mimeType
 
 	for _, header := range cp.Headers {
-		w := strings.SplitN(header, "=", 2)
-		if len(w) == 2 {
-			headers[w[0]] = w[1]
-		}
+		var key, value string
+		string_tools.SplitString(header, "=", &key, &value)
+		headers[key] = value
 	}
 
 	postID, err := cp.service.Post(content, cp.TTL, headers)
@@ -146,13 +146,14 @@ func (cp *PadCliPostStruct) Run(ctx context.Context, output io.Writer) (err erro
 		return err
 	}
 
-	fmt.Fprintf(output, "Created new pad: %s\n\n", postID)
+	tree := console.NewTree("New pad")
+	tree.AddChild("ID=" + postID)
 
 	for h, v := range headers {
-		fmt.Fprintf(output, "%s=%v\n", h, v)
+		tree.AddChild(fmt.Sprintf("%s=%v", h, v))
 	}
 
-	return nil
+	return tree.Write(output)
 }
 
 func (cp *PadCliDelStruct) Run(ctx context.Context, output io.Writer) error {
@@ -163,7 +164,7 @@ func (cp *PadCliDelStruct) Run(ctx context.Context, output io.Writer) error {
 		return err
 	}
 
-	fmt.Fprintf(output, "Pad deleted: %s\n", postID)
+	_, _ = fmt.Fprintf(output, "Pad deleted: %s\n", postID)
 
 	return nil
 }
@@ -172,7 +173,7 @@ func (cp *PadCliSetupStruct) Run(ctx context.Context, output io.Writer) error {
 	cfg := cp.service.GetConfig()
 
 	if cp.Show {
-		fmt.Fprintf(output, `PAD CLI SETUP
+		_, _ = fmt.Fprintf(output, `PAD CLI SETUP
 		
 Enabled = %v
 Backend URL = %s
