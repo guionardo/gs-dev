@@ -36,10 +36,7 @@ func TestAssertDirectory(t *testing.T) {
 	t.Run("AssertDirectory_with_$HOME_should_get_current_home", func(t *testing.T) {
 		t.Parallel()
 
-		firstDir, err := getFirstDirectoryInHome(t)
-		if err != nil {
-			return
-		}
+		firstDir := getFirstDirectoryInHome(t)
 
 		got, err := fs_tools.AssertDirectory("$HOME/" + path.Base(firstDir))
 		require.NoError(t, err)
@@ -49,10 +46,7 @@ func TestAssertDirectory(t *testing.T) {
 	t.Run("AssertDirectory_with_~_should_get_current_home", func(t *testing.T) {
 		t.Parallel()
 
-		firstDir, err := getFirstDirectoryInHome(t)
-		if err != nil {
-			return
-		}
+		firstDir := getFirstDirectoryInHome(t)
 
 		got, err := fs_tools.AssertDirectory("~/" + path.Base(firstDir))
 		require.NoError(t, err)
@@ -100,7 +94,7 @@ func TestAssertFilename(t *testing.T) {
 	})
 }
 
-func getFirstDirectoryInHome(t *testing.T) (string, error) {
+func getFirstDirectoryInHome(t *testing.T) string {
 	t.Helper()
 
 	home, err := os.UserHomeDir()
@@ -111,7 +105,7 @@ func getFirstDirectoryInHome(t *testing.T) (string, error) {
 		if err == nil {
 			for _, entry := range entries {
 				if entry.IsDir() {
-					return path.Join(home, entry.Name()), nil
+					return path.Join(home, entry.Name())
 				}
 			}
 
@@ -121,5 +115,5 @@ func getFirstDirectoryInHome(t *testing.T) (string, error) {
 
 	t.Skipf("Failed to get HOME directory - %v", err)
 
-	return "", err
+	return ""
 }

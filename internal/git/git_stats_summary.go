@@ -10,6 +10,9 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/guionardo/gs-dev/pkg/console"
+	"github.com/guionardo/gs-dev/pkg/console/symbols"
 )
 
 type (
@@ -117,47 +120,45 @@ func (s *GitStatsSummary) RepositorySummary(w io.Writer) error {
 		return errors.New("no commits")
 	}
 
-	_, _ = fmt.Fprintf(w, "# %s\n\n", s.repositoryName)
-	_, _ = fmt.Fprintf(w, "remote: %s\n\n", s.remotes)
+	tree := console.NewTree(console.Styled(s.repositoryName, console.Green))
 
-	_, _ = fmt.Fprintf(w, "branch: %s\n\n", s.currentBranch)
-	if s.filter != nil {
-		_, _ = fmt.Fprintf(w, "filters:\n")
+	repo := tree.AddChild(console.Styled("Repository", console.Blue))
+	repo.AddChild(symbols.Remote + " " + s.remotes)
+	repo.AddChild(symbols.Branch + " " + s.currentBranch)
+
+	if !s.filter.IsEmpty() {
+		filter := tree.AddChild(console.Styled("Filters", console.Blue))
+
 		if len(s.filter.authors) > 0 {
-			_, _ = fmt.Fprintf(w, "\tauthors: %s\n", strings.Join(s.filter.authors, ", "))
+			filter.AddChild("authors: " + strings.Join(s.filter.authors, ", "))
 		}
 
-		if !s.filter.since.IsZero() {
-			_, _ = fmt.Fprintf(w, "\tsince: %s\n", s.filter.since.Format(time.DateTime))
-		}
-
-		if !s.filter.until.IsZero() {
-			_, _ = fmt.Fprintf(w, "\tuntil: %s\n", s.filter.until.Format(time.DateTime))
+		if !s.filter.since.IsZero() || !s.filter.until.IsZero() {
+			filter.AddChild(symbols.Date + " " + formatTime(s.filter.since) + " -> " + formatTime(s.filter.until))
 		}
 
 		if s.filter.branch != "" {
-			_, _ = fmt.Fprintf(w, "\tbranch: %s\n", s.filter.branch)
+			filter.AddChild(symbols.Branch + " " + s.filter.branch)
 		}
-
-		_, _ = fmt.Fprintln(w)
 	}
 
-	_, _ = fmt.Fprintf(w, "* %d commits from %s to %s\n",
+	stats := tree.AddChild(console.Styled("Stats", console.Blue))
+	stats.AddChild(fmt.Sprintf("%s %d commits between %s and %s",
+		symbols.Commit,
 		s.commits,
-		s.firstCommitTimestamp.Format(time.DateTime),
-		s.lastCommitTimestamp.Format(time.DateTime))
-	_, _ = fmt.Fprintf(w, "* %d lines\n", s.totalLinesInsertions-s.totalLinesDeletions)
+		formatTime(s.firstCommitTimestamp),
+		formatTime(s.lastCommitTimestamp)))
+
+	stats.AddChild(fmt.Sprintf("%d lines", s.totalLinesInsertions-s.totalLinesDeletions))
 
 	commitsPerDay := float64(s.commits) / max(1, s.lastCommitTimestamp.Sub(s.firstCommitTimestamp).Hours()/24)
 	if commitsPerDay < 1 {
-		_, _ = fmt.Fprintf(w, "* %.1f days between commits (average)\n", 1/commitsPerDay)
+		stats.AddChild(fmt.Sprintf("%.1f days between commits (average)", 1/commitsPerDay))
 	} else {
-		_, _ = fmt.Fprintf(w, "* %.1f commits per day (average)\n", commitsPerDay)
+		stats.AddChild(fmt.Sprintf("%.1f commits per day (average)", commitsPerDay))
 	}
 
-	fmt.Fprintf(w, "\n")
-
-	_, _ = fmt.Fprintf(w, "## Contributors\n\n")
+	contributors := tree.AddChild(console.Styled("contributors (name, e-mail, commits, added lines, removed lines)", console.Blue))
 
 	contributions := slices.Collect(maps.Values(s.usersStats))
 	sort.Slice(contributions, func(i, j int) bool {
@@ -167,9 +168,21 @@ func (s *GitStatsSummary) RepositorySummary(w io.Writer) error {
 	index := 0
 	for _, contribution := range contributions {
 		index++
-		_, _ = fmt.Fprintf(w, "%d. %s (%d commits, %d added lines, %d removed lines)\n",
-			index, contribution.author, contribution.commits, contribution.linesInsertions, contribution.linesDeletions)
+		contributors.AddChild(fmt.Sprintf("%d. %s (%d, +%d, -%d)",
+			index, contribution.author, contribution.commits, contribution.linesInsertions, contribution.linesDeletions))
 	}
 
-	return nil
+	return tree.Write(w)
+}
+
+func formatTime(t time.Time) string {
+	if t.IsZero() {
+		return "♾️"
+	}
+
+	if t.Hour() == 0 && t.Minute() == 0 && t.Second() == 0 {
+		return t.Format(time.DateOnly)
+	}
+
+	return t.Format(time.DateTime)
 }

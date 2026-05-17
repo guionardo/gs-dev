@@ -41,6 +41,10 @@ func NewGitStatsFilter() *GitStatsFilter {
 	}
 }
 
+func (f *GitStatsFilter) IsEmpty() bool {
+	return f == nil || (len(f.authors) == 0 && f.branch == "" && f.since.IsZero() && f.until.IsZero())
+}
+
 func (f *GitStatsFilter) Since(t time.Time) *GitStatsFilter {
 	f.since = t
 	return f

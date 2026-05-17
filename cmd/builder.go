@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"errors"
+	"log/slog"
 
 	"github.com/guionardo/gs-dev/internal/config"
 	errs "github.com/guionardo/gs-dev/internal/errors"
+	"github.com/guionardo/gs-dev/internal/logging"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +26,7 @@ type (
 	CommandOptionsFn func(Commander) error
 )
 
-// Create a command binded to
+// NewCommand Create a command binded to a ConfigType
 func NewCommand[TParams any, TConfig config.ConfigType](name string, configRoot *config.ConfigRoot, options ...CommandOptionsFn) (Commander, error) {
 	if configRoot == nil {
 		return nil, errs.NewError(nil, "null configuration", false)
@@ -32,6 +34,7 @@ func NewCommand[TParams any, TConfig config.ConfigType](name string, configRoot 
 
 	config, err := config.GetValue[TConfig](configRoot)
 	if err != nil {
+		logging.Debug("Configuration", slog.Any("error", err), slog.Any("config", config))
 		// TODO: Check if the configuration should be valid at this point
 	}
 

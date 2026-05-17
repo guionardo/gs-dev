@@ -109,7 +109,7 @@ func setupTestServer(t *testing.T, cfg *configurations.PadServerConfig, svc pads
 		}
 	}()
 
-	conn, err := grpc.DialContext(context.Background(), "bufnet",
+	conn, err := grpc.NewClient("passthrough:///bufnet",
 		grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) {
 			return listener.Dial()
 		}),
@@ -117,7 +117,7 @@ func setupTestServer(t *testing.T, cfg *configurations.PadServerConfig, svc pads
 	)
 	require.NoError(t, err)
 
-	t.Cleanup(func() { conn.Close() })
+	t.Cleanup(func() { _ = conn.Close() })
 
 	client := pb.NewPadServiceClient(conn)
 	ctx := context.Background()
