@@ -151,7 +151,7 @@ func (s *GitStatsSummary) RepositorySummary(w io.Writer) error {
 
 	stats.AddChild(fmt.Sprintf("%d lines", s.totalLinesInsertions-s.totalLinesDeletions))
 
-	commitsPerDay := float64(s.commits) / max(1, s.lastCommitTimestamp.Sub(s.firstCommitTimestamp).Hours()/24)
+	commitsPerDay := float64(s.commits) / max(1, s.lastCommitTimestamp.Sub(s.firstCommitTimestamp).Hours()/24) //nolint:mnd
 	if commitsPerDay < 1 {
 		stats.AddChild(fmt.Sprintf("%.1f days between commits (average)", 1/commitsPerDay))
 	} else {

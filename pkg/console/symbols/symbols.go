@@ -6,6 +6,10 @@ const (
 	Remote = ""
 	Date   = "📅"
 
+	Check   = "✅"
+	Error   = "❌"
+	Warning = "⚠️"
+
 	// "dockerfile":   " ",
 	// "makefile":     " ",
 	// "gradle":       " ",

@@ -48,7 +48,7 @@ func Logger(args ...any) *slog.Logger {
 
 	var source, callerFunc string
 
-	pc, file, line, ok := runtime.Caller(2)
+	pc, file, line, ok := runtime.Caller(2) //nolint: mnd
 	if ok {
 		source = fmt.Sprintf("%s:%d", file, line)
 		callerFunc = runtime.FuncForPC(pc).Name()

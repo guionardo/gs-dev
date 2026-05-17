@@ -84,12 +84,12 @@ func (c GitCommit) String() string {
 
 // AuthorEmail get the email from author string: Guionardo Furlan <guionardo@gmail.com>
 func (c *GitCommit) AuthorEmail() string {
-	w := strings.SplitN(c.author, "<", 2)
-	if len(w) < 2 {
+	w := strings.SplitN(c.author, "<", 2) //nolint: mnd
+	if len(w) < 2 {                       //nolint: mnd
 		return c.author
 	}
 
-	w = strings.SplitN(w[1], ">", 2)
+	w = strings.SplitN(w[1], ">", 2) //nolint: mnd
 	if len(w) < 1 {
 		return c.author
 	}
@@ -192,7 +192,7 @@ func parseGitStats(output []byte) iter.Seq[GitCommit] {
 // readSummary parses the text:  5 files changed, 1 insertion(+), 179 deletions(-)
 func readSummary(line string, commit *GitCommit) bool {
 	words := splitInWords(line)
-	if len(words) != 7 {
+	if len(words) != 7 { //nolint: mnd
 		return false
 	}
 

@@ -94,7 +94,7 @@ func (n *Node) Write(w io.Writer, order nodeOrder, parentPrefix string) error {
 			}
 		}
 
-		subNode.Write(w, childOrder, parentPrefix)
+		_ = subNode.Write(w, childOrder, parentPrefix)
 	}
 
 	return nil
