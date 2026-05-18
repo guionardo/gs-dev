@@ -13,19 +13,19 @@ type (
 		RootConfig *config.ConfigRoot
 	}
 
-	contextKey string
+	contextKey byte
 )
 
-const CommandContextKey contextKey = "command"
+const cmdCtxKey contextKey = 0
 
 // GetCommandContext creates a new context with the provided CommandContextData
 func GetCommandContext(originalContext context.Context, ctxData CommandContextData) context.Context {
-	return context.WithValue(originalContext, CommandContextKey, ctxData)
+	return context.WithValue(originalContext, cmdCtxKey, ctxData)
 }
 
 // GetCommandContextData retrieves the CommandContextData from the context
 func GetCommandContextData(ctx context.Context) (CommandContextData, error) {
-	data, ok := ctx.Value(CommandContextKey).(CommandContextData)
+	data, ok := ctx.Value(cmdCtxKey).(CommandContextData)
 	if !ok {
 		return data, errors.ErrCommandContextDataNotFound
 	}

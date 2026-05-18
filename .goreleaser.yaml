@@ -1,0 +1,31 @@
+# .goreleaser.yaml
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - id: my-app
+    binary: my-binary-name
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    goarm:
+      - 7    # Optimizes 32-bit ARM binar
+archives:
+  - format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ incpatch .Version }}-snapshot"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
