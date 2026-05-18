@@ -13,16 +13,16 @@ type DummyStorage struct {
 }
 
 var (
-	_                    interfaces.Storage = &DummyStorage{}
-	disabledStorageError                    = errors.NewError(nil, "storage is disabled", false)
+	_                  interfaces.PadStorage = &DummyStorage{}
+	errDisabledStorage                       = errors.NewError(nil, "storage is disabled", false)
 )
 
 func (ds *DummyStorage) Post(content []byte, ttl time.Duration, headers map[string]string) (postID string, err error) {
-	return "", disabledStorageError
+	return "", errDisabledStorage
 }
 func (ds *DummyStorage) Get(postID string) (content []byte, headers map[string]string, err error) {
-	return nil, nil, disabledStorageError
+	return nil, nil, errDisabledStorage
 }
 func (ds *DummyStorage) Delete(postID string) error {
-	return disabledStorageError
+	return errDisabledStorage
 }

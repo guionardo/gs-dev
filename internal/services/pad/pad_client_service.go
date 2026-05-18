@@ -51,7 +51,7 @@ func (p *PadClientService) Post(content []byte, ttl time.Duration, headers map[s
 	if err == nil {
 		p.config.LastPosts.Add(postID, validUntil)
 		config.SetValue(p.configRoot, p.config)
-		p.configRoot.Save()
+		_ = p.configRoot.Save()
 	}
 
 	return postID, err // TODO: Wrap error with more context
@@ -71,7 +71,7 @@ func (p *PadClientService) Get(postID string) (content []byte, err error) {
 	}
 
 	config.SetValue(p.configRoot, p.config)
-	p.configRoot.Save()
+	_ = p.configRoot.Save()
 
 	return content, err // TODO: Wrap error with more context
 }
