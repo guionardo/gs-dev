@@ -28,7 +28,7 @@ func main() {
 	var docsFolder string
 	flag.StringVar(&docsFolder, "docs", "../../docs", "docs folder")
 	flag.Parse()
-	logging.Setup(false, os.Stdout)
+	logging.Setup(os.Stdout)
 
 	rootCmd := getRootCommand()
 	docsFolder, err := filepath.Abs(docsFolder)

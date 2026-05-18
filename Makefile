@@ -26,6 +26,7 @@ setup: ## Check all required tools and install dependencies
 	@touch .vscode/.setup
 	@echo "Setup done!"
 
+.PHONY: docs
 docs: ## Generate documentation for the application
 	@go get github.com/spf13/cobra/doc@latest
 	@go run cmd/docs/docs.go --docs=./docs
