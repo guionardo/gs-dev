@@ -24,6 +24,8 @@ gs-dev [flags]
 * [gs-dev git-stats](gs-dev_git-stats.md)	 - Show git stats
 * [gs-dev init](gs-dev_init.md)	 - Initialization for shell alias
 * [gs-dev install](gs-dev_install.md)	 - Install the bindings into your shell profile
+* [gs-dev pad](gs-dev_pad.md)	 - Pad is a form of transmit short information.
+* [gs-dev pad-server](gs-dev_pad-server.md)	 - Start the Pad server.
 * [gs-dev setup](gs-dev_setup.md)	 - Setup the application
 * [gs-dev url](gs-dev_url.md)	 - Open a URL
 * [gs-dev version](gs-dev_version.md)	 - Application version
