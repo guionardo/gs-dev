@@ -193,7 +193,7 @@ func (d *DevService) PurgeUnexistentRoots() (err error) {
 			tree.AddChild(console.Styled("error: "+err.Error(), "yellow"))
 		}
 
-		tree.Write(os.Stdout)
+		_ = tree.Write(os.Stdout)
 	}
 
 	return err

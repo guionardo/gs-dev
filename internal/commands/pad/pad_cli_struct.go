@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/guionardo/gs-dev/internal/cli"
+	"github.com/guionardo/gs-dev/internal/consts"
 	ctxdata "github.com/guionardo/gs-dev/internal/context"
 	"github.com/guionardo/gs-dev/internal/errors"
 	padservice "github.com/guionardo/gs-dev/internal/services/pad"
@@ -93,14 +94,7 @@ func (cg *PadCliGetStruct) Run(ctx context.Context, output io.Writer) error {
 		return err
 	}
 
-	file, err := os.Create(cg.Output)
-	if err == nil {
-		defer file.Close()
-
-		_, err = file.Write(content)
-	}
-
-	return err
+	return os.WriteFile(cg.Output, content, consts.FilesPermissions)
 }
 
 func (cp *PadCliPostStruct) Run(ctx context.Context, output io.Writer) (err error) {
@@ -109,20 +103,17 @@ func (cp *PadCliPostStruct) Run(ctx context.Context, output io.Writer) (err erro
 		headers = map[string]string{}
 	)
 
-	if cp.StdIn {
+	switch {
+	case cp.StdIn:
 		content, err = cli.ReadFromStdIn()
-	} else if cp.Filename != "" {
-		var file *os.File
-
-		file, err = os.Open(cp.Filename)
+	case cp.Filename != "":
+		content, err = os.ReadFile(cp.Filename)
 		if err != nil {
 			return errors.NewError(err, "failed to open file: %s", false, cp.Filename)
 		}
-		defer file.Close()
 
-		content, err = io.ReadAll(file)
 		headers["filename"] = path.Base(cp.Filename)
-	} else {
+	default:
 		err = errors.NewError(nil, "required source of data for pad", false)
 	}
 
