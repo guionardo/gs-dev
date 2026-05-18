@@ -3,6 +3,7 @@ package padservice
 import (
 	"time"
 
+	"github.com/guionardo/go/flow"
 	"github.com/guionardo/gs-dev/internal/compression"
 	"github.com/guionardo/gs-dev/internal/config"
 	pad_client "github.com/guionardo/gs-dev/internal/pad/client"
@@ -44,7 +45,14 @@ func (p *PadClientService) Post(content []byte, ttl time.Duration, headers map[s
 	}
 
 	headers[ContentCompressorHeader] = compressor
+	validUntil := flow.If(ttl > 0, time.Now().Add(ttl), time.Time{}).Round(time.Second)
+
 	postID, err = p.client.Post(compressed, ttl, headers)
+	if err == nil {
+		p.config.LastPosts.Add(postID, validUntil)
+		config.SetValue(p.configRoot, p.config)
+		p.configRoot.Save()
+	}
 
 	return postID, err // TODO: Wrap error with more context
 }
@@ -55,6 +63,15 @@ func (p *PadClientService) Get(postID string) (content []byte, err error) {
 	if err == nil && metadata != nil {
 		content, err = compression.Decompress(content, metadata[ContentCompressorHeader])
 	}
+
+	if err == nil {
+		p.config.LastPosts.Add(postID, time.Now().AddDate(0, 0, 7))
+	} else {
+		p.config.LastPosts.Remove(postID)
+	}
+
+	config.SetValue(p.configRoot, p.config)
+	p.configRoot.Save()
 
 	return content, err // TODO: Wrap error with more context
 }
@@ -85,4 +102,8 @@ func (p *PadClientService) SaveConfig(cfg *PadClientConfig) error {
 
 func (p *PadClientService) SetCustomClientConfig(clientConfig *PadClientConfig) {
 	p.customConfig = clientConfig
+}
+
+func (p *PadClientService) GetLastPostIDs() []Post {
+	return p.config.LastPosts.Posts()
 }

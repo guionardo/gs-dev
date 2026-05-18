@@ -45,7 +45,6 @@ type (
 		StdIn    bool          `flag:"stdin" description:"Read data from std in (pipe)"`
 		TTL      time.Duration `flag:"ttl" description:"time to live of the pad"`
 		Headers  []string      `flag:"header" description:"header=value"`
-		// Body     []byte        `stdin:"true"`
 	}
 	PadCliDelStruct struct {
 		basePadCliStruct

@@ -163,10 +163,10 @@ func (p *PadServerSetupStruct) Run(ctx context.Context, output io.Writer) error 
 
 func (p *PadServerSetupStruct) showSetup(cfg padservice.PadServerConfig, output io.Writer) error {
 	tree := console.NewTree(console.Styled("Pad server configuration", console.Blue))
-	tree.AddChild(console.Styled("PORT = %d", console.Cyan, cfg.Port))
-	tree.AddChild(console.Styled("API KEY = %s", console.Cyan, cfg.APIKey))
-	tree.AddChild(console.Styled("STORAGE = %s", console.Cyan, cfg.StorageConfig.Directory))
-	tree.AddChild(console.Styled("S = %s", console.Cyan, cfg.StorageConfig.DefaultTTL))
+	tree.AddChild(console.Styled("PORT: %d", console.Cyan, cfg.Port))
+	tree.AddChild(console.Styled("API key: %s", console.Cyan, cfg.APIKey))
+	tree.AddChild(console.Styled("Storage directory: %s", console.Cyan, cfg.StorageConfig.Directory))
+	tree.AddChild(console.Styled("Default TTL: %s", console.Cyan, cfg.StorageConfig.DefaultTTL))
 
 	if err := cfg.Validate(); err == nil {
 		tree.AddChild(console.Styled("Status: OK", console.Green))
