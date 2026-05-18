@@ -7,7 +7,6 @@ import (
 	"sort"
 
 	"github.com/guionardo/gs-dev/app/build"
-	"github.com/guionardo/gs-dev/internal/colors"
 	"github.com/guionardo/gs-dev/internal/config"
 	"github.com/guionardo/gs-dev/internal/consts"
 	"github.com/guionardo/gs-dev/internal/context"
@@ -16,6 +15,7 @@ import (
 	"github.com/guionardo/gs-dev/internal/interfaces"
 	"github.com/guionardo/gs-dev/internal/logging"
 	installservice "github.com/guionardo/gs-dev/internal/services/install"
+	"github.com/guionardo/gs-dev/pkg/console"
 	postcommand "github.com/guionardo/gs-dev/pkg/post_command"
 	"github.com/spf13/cobra"
 )
@@ -144,7 +144,7 @@ func (c *CommandManager) Run(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	fmt.Println(colors.Parse("{primary}[%s]{normal} v %s %s\nCtrl+C to exit", build.AppName, build.Version, build.BuildInfo))
+	fmt.Println(console.Parse("{primary}[%s]{normal} v %s %s\nCtrl+C to exit", build.AppName, build.Version, build.BuildInfo))
 
 	commandName, err := dialog.Choose(">", commands...)
 	if err != nil {

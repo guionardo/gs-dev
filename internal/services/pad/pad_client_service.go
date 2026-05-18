@@ -5,14 +5,13 @@ import (
 
 	"github.com/guionardo/gs-dev/internal/compression"
 	"github.com/guionardo/gs-dev/internal/config"
-	"github.com/guionardo/gs-dev/internal/configurations"
 	pad_client "github.com/guionardo/gs-dev/internal/pad/client"
 )
 
 type PadClientService struct {
 	configRoot   *config.ConfigRoot
-	config       *configurations.PadClientConfig
-	customConfig *configurations.PadClientConfig
+	config       *PadClientConfig
+	customConfig *PadClientConfig
 	client       *pad_client.PadClient
 }
 
@@ -21,24 +20,19 @@ const (
 )
 
 func NewPadClientService(configuration *config.ConfigRoot) *PadClientService {
-	clientConfig, err := config.GetValue[configurations.PadClientConfig](configuration)
+	clientConfig, err := config.GetValue[PadClientConfig](configuration)
 	if err != nil {
-		clientConfig = configurations.PadClientConfig{}
+		clientConfig = PadClientConfig{}
 	}
 
 	clientConfig.Defaults()
 	service := &PadClientService{configRoot: configuration, config: &clientConfig}
 
-	var client *pad_client.PadClient
 	if clientConfig.BackendURL != "" {
 		service.client, _ = pad_client.NewPadClient(clientConfig.BackendURL, clientConfig.APIKey)
 	}
 
-	return &PadClientService{
-		configRoot: configuration,
-		config:     &clientConfig,
-		client:     client,
-	}
+	return service
 }
 
 func (p *PadClientService) Post(content []byte, ttl time.Duration, headers map[string]string) (postID string, err error) {
@@ -71,7 +65,7 @@ func (p *PadClientService) Delete(postID string) (err error) {
 	return err
 }
 
-func (p *PadClientService) GetConfig() *configurations.PadClientConfig {
+func (p *PadClientService) GetConfig() *PadClientConfig {
 	if p.customConfig != nil {
 		return p.customConfig
 	}
@@ -79,7 +73,7 @@ func (p *PadClientService) GetConfig() *configurations.PadClientConfig {
 	return p.config
 }
 
-func (p *PadClientService) SaveConfig(cfg *configurations.PadClientConfig) error {
+func (p *PadClientService) SaveConfig(cfg *PadClientConfig) error {
 	config.SetValue(p.configRoot, cfg)
 
 	if err := cfg.Validate(); err != nil {
@@ -89,6 +83,6 @@ func (p *PadClientService) SaveConfig(cfg *configurations.PadClientConfig) error
 	return p.configRoot.Save()
 }
 
-func (p *PadClientService) SetCustomClientConfig(clientConfig *configurations.PadClientConfig) {
+func (p *PadClientService) SetCustomClientConfig(clientConfig *PadClientConfig) {
 	p.customConfig = clientConfig
 }

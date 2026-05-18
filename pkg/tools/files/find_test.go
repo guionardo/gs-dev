@@ -31,6 +31,81 @@ func TestFindFirst(t *testing.T) {
 	})
 }
 
+func TestFindFirstInSubdirs(t *testing.T) {
+	t.Parallel()
+
+	t.Run("find_file_at_root_with_maxdepth_0", func(t *testing.T) {
+		t.Parallel()
+		root := t.TempDir()
+		_ = os.WriteFile(path.Join(root, "file.txt"), []byte("content"), 0600)
+		got := files.FindFirstInSubdirs(root, 0, "file.txt")
+		assert.Equal(t, path.Join(root, "file.txt"), got)
+	})
+
+	t.Run("find_file_at_root_with_maxdepth_1", func(t *testing.T) {
+		t.Parallel()
+		root := t.TempDir()
+		_ = os.WriteFile(path.Join(root, "file.txt"), []byte("content"), 0600)
+		got := files.FindFirstInSubdirs(root, 1, "file.txt")
+		assert.Equal(t, path.Join(root, "file.txt"), got)
+	})
+
+	t.Run("find_file_one_level_deep", func(t *testing.T) {
+		t.Parallel()
+		root := t.TempDir()
+		_ = os.MkdirAll(path.Join(root, "subdir"), 0750)
+		_ = os.WriteFile(path.Join(root, "subdir", "file.txt"), []byte("content"), 0600)
+		got := files.FindFirstInSubdirs(root, 1, "file.txt")
+		assert.Equal(t, path.Join(root, "subdir", "file.txt"), got)
+	})
+
+	t.Run("shallow_depth_wins_over_deeper", func(t *testing.T) {
+		t.Parallel()
+		root := t.TempDir()
+		_ = os.WriteFile(path.Join(root, "file.txt"), []byte("root"), 0600)
+		_ = os.MkdirAll(path.Join(root, "subdir"), 0750)
+		_ = os.WriteFile(path.Join(root, "subdir", "file.txt"), []byte("deep"), 0600)
+		got := files.FindFirstInSubdirs(root, 1, "file.txt")
+		assert.Equal(t, path.Join(root, "file.txt"), got)
+	})
+
+	t.Run("find_file_two_levels_deep", func(t *testing.T) {
+		t.Parallel()
+		root := t.TempDir()
+		_ = os.MkdirAll(path.Join(root, "a", "b"), 0750)
+		_ = os.WriteFile(path.Join(root, "a", "b", "file.txt"), []byte("content"), 0600)
+		got := files.FindFirstInSubdirs(root, 2, "file.txt")
+		assert.Equal(t, path.Join(root, "a", "b", "file.txt"), got)
+	})
+
+	t.Run("not_found_returns_empty", func(t *testing.T) {
+		t.Parallel()
+		root := t.TempDir()
+		_ = os.MkdirAll(path.Join(root, "subdir"), 0750)
+		got := files.FindFirstInSubdirs(root, 2, "nonexistent.txt")
+		assert.Empty(t, got)
+	})
+
+	t.Run("first_matching_name_wins", func(t *testing.T) {
+		t.Parallel()
+		root := t.TempDir()
+		_ = os.MkdirAll(path.Join(root, "subdir"), 0750)
+		_ = os.WriteFile(path.Join(root, "subdir", "alpha.txt"), []byte("content"), 0600)
+		_ = os.WriteFile(path.Join(root, "subdir", "beta.txt"), []byte("content"), 0600)
+		got := files.FindFirstInSubdirs(root, 1, "alpha.txt", "beta.txt")
+		assert.Equal(t, path.Join(root, "subdir", "alpha.txt"), got)
+	})
+
+	t.Run("limited_maxdepth_prevents_deeper_match", func(t *testing.T) {
+		t.Parallel()
+		root := t.TempDir()
+		_ = os.MkdirAll(path.Join(root, "a", "b"), 0750)
+		_ = os.WriteFile(path.Join(root, "a", "b", "file.txt"), []byte("content"), 0600)
+		got := files.FindFirstInSubdirs(root, 1, "file.txt")
+		assert.Empty(t, got)
+	})
+}
+
 func TestLocateBinary(t *testing.T) {
 	t.Parallel()
 

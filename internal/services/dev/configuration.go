@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/guionardo/gs-dev/internal/fs_tools"
+	pathtools "github.com/guionardo/go/path_tools"
 )
 
 type (
@@ -83,7 +83,7 @@ func (r *Root) EfectiveIgnore(folder string) bool {
 	currentFolder := folder
 	level := 0
 
-	for !fs_tools.PathIsRoot(currentFolder) {
+	for !pathtools.IsRootDirectory(currentFolder) {
 		if localConfig, ok := r.LocalConfigs[folder]; ok && (localConfig.Ignore || (level > 0 && localConfig.IgnoreSubfolders)) {
 			return true
 		}

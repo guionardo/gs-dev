@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/guionardo/gs-dev/internal/configurations"
 	paderrors "github.com/guionardo/gs-dev/internal/errors"
 	pb "github.com/guionardo/gs-dev/internal/pad/proto"
 	padserver "github.com/guionardo/gs-dev/internal/pad/server"
+	padservice "github.com/guionardo/gs-dev/internal/services/pad"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -91,7 +91,7 @@ func (m *mockPadService) IsAPIKeyValid(apiKey string) bool {
 	return m.validKey == "" || m.validKey == apiKey
 }
 
-func setupTestServer(t *testing.T, cfg *configurations.PadServerConfig, svc padserver.PadService) (pb.PadServiceClient, context.Context) {
+func setupTestServer(t *testing.T, cfg *padservice.PadServerConfig, svc padserver.PadService) (pb.PadServiceClient, context.Context) {
 	t.Helper()
 
 	logger := slog.New(slog.NewTextHandler(t.Output(), nil))
@@ -128,7 +128,7 @@ func setupTestServer(t *testing.T, cfg *configurations.PadServerConfig, svc pads
 func TestCreatePad_Success(t *testing.T) {
 	t.Parallel()
 
-	cfg := configurations.NewPadServerConfig()
+	cfg := padservice.NewPadServerConfig()
 	mock := newMockPadService("")
 	client, ctx := setupTestServer(t, cfg, mock)
 
@@ -145,7 +145,7 @@ func TestCreatePad_Success(t *testing.T) {
 func TestCreatePad_Unauthenticated(t *testing.T) {
 	t.Parallel()
 
-	cfg := configurations.NewPadServerConfig()
+	cfg := padservice.NewPadServerConfig()
 	cfg.APIKey = "valid-key-uuid"
 	mock := newMockPadService("valid-key-uuid")
 	client, ctx := setupTestServer(t, cfg, mock)
@@ -161,7 +161,7 @@ func TestCreatePad_Unauthenticated(t *testing.T) {
 func TestCreatePad_WithValidAPIKey(t *testing.T) {
 	t.Parallel()
 
-	cfg := configurations.NewPadServerConfig()
+	cfg := padservice.NewPadServerConfig()
 	cfg.APIKey = "valid-key-uuid"
 	mock := newMockPadService("valid-key-uuid")
 	client, baseCtx := setupTestServer(t, cfg, mock)
@@ -177,7 +177,7 @@ func TestCreatePad_WithValidAPIKey(t *testing.T) {
 func TestGetPad_Success(t *testing.T) {
 	t.Parallel()
 
-	cfg := configurations.NewPadServerConfig()
+	cfg := padservice.NewPadServerConfig()
 	mock := newMockPadService("")
 	client, ctx := setupTestServer(t, cfg, mock)
 
@@ -196,7 +196,7 @@ func TestGetPad_Success(t *testing.T) {
 func TestGetPad_NotFound(t *testing.T) {
 	t.Parallel()
 
-	cfg := configurations.NewPadServerConfig()
+	cfg := padservice.NewPadServerConfig()
 	mock := newMockPadService("")
 	client, ctx := setupTestServer(t, cfg, mock)
 
@@ -209,7 +209,7 @@ func TestGetPad_NotFound(t *testing.T) {
 func TestGetPad_Expired(t *testing.T) {
 	t.Parallel()
 
-	cfg := configurations.NewPadServerConfig()
+	cfg := padservice.NewPadServerConfig()
 	mock := newMockPadService("")
 	client, ctx := setupTestServer(t, cfg, mock)
 
@@ -233,7 +233,7 @@ func TestGetPad_Expired(t *testing.T) {
 func TestDeletePad_Success(t *testing.T) {
 	t.Parallel()
 
-	cfg := configurations.NewPadServerConfig()
+	cfg := padservice.NewPadServerConfig()
 	mock := newMockPadService("")
 	client, ctx := setupTestServer(t, cfg, mock)
 
@@ -254,7 +254,7 @@ func TestDeletePad_Success(t *testing.T) {
 func TestDeletePad_NotFound(t *testing.T) {
 	t.Parallel()
 
-	cfg := configurations.NewPadServerConfig()
+	cfg := padservice.NewPadServerConfig()
 	mock := newMockPadService("")
 	client, ctx := setupTestServer(t, cfg, mock)
 
@@ -267,7 +267,7 @@ func TestDeletePad_NotFound(t *testing.T) {
 func TestCreatePad_InternalError(t *testing.T) {
 	t.Parallel()
 
-	cfg := configurations.NewPadServerConfig()
+	cfg := padservice.NewPadServerConfig()
 	mock := newMockPadService("")
 	mock.postFunc = func(body []byte, ttl time.Duration, metadata map[string]string) (string, error) {
 		return "", paderrors.ErrPostIDInvalid

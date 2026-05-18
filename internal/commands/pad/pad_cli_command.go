@@ -4,14 +4,11 @@ import (
 	"github.com/guionardo/gs-dev/internal/cli"
 	"github.com/guionardo/gs-dev/internal/commands"
 	"github.com/guionardo/gs-dev/internal/config"
-	padservice "github.com/guionardo/gs-dev/internal/services/pad"
 	"github.com/spf13/cobra"
 )
 
 type PadCliCommand struct {
 	commands.CommonCommand
-
-	service *padservice.PadClientService
 }
 
 const (
@@ -24,8 +21,6 @@ func (p *PadCliCommand) Init() {
 }
 
 func (p *PadCliCommand) setup(configuration *config.ConfigRoot) (err error) {
-	p.service = padservice.NewPadClientService(configuration)
-
 	return nil
 }
 

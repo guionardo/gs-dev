@@ -4,19 +4,18 @@ import (
 	"time"
 
 	"github.com/guionardo/gs-dev/internal/config"
-	"github.com/guionardo/gs-dev/internal/configurations"
 	"github.com/guionardo/gs-dev/internal/errors"
 	"github.com/guionardo/gs-dev/internal/interfaces"
 )
 
 type PadServerService struct {
-	config       *configurations.PadServerConfig
-	customConfig *configurations.PadServerConfig
+	config       *PadServerConfig
+	customConfig *PadServerConfig
 	storage      interfaces.PadStorage
 }
 
 func NewPadServerService(configuration *config.ConfigRoot, storage interfaces.PadStorage) (*PadServerService, error) {
-	configServer, _ := config.GetValue[configurations.PadServerConfig](configuration)
+	configServer, _ := config.GetValue[PadServerConfig](configuration)
 	if err := configServer.Validate(); err != nil {
 		return nil, err
 	}
@@ -48,20 +47,20 @@ func (p *PadServerService) IsAPIKeyValid(apiKey string) bool {
 }
 
 func (p *PadServerService) GetDefaultTTL() time.Duration {
-	return 24 * time.Hour // TODO: Implement default TTL
+	return min(p.config.StorageConfig.DefaultTTL, time.Duration(0))
 }
 
 func (p *PadServerService) isAuthorized(apiKey string) bool {
 	return len(p.config.APIKey) == 0 || p.config.APIKey == apiKey
 }
 
-func (p *PadServerService) GetConfig() *configurations.PadServerConfig {
+func (p *PadServerService) GetConfig() *PadServerConfig {
 	if p.customConfig != nil {
 		return p.customConfig
 	}
 
 	return p.config
 }
-func (p *PadServerService) SetCustomClientConfig(serverConfig *configurations.PadServerConfig) {
+func (p *PadServerService) SetCustomClientConfig(serverConfig *PadServerConfig) {
 	p.customConfig = serverConfig
 }

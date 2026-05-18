@@ -1,4 +1,4 @@
-package fs_tools
+package files
 
 import (
 	"errors"
@@ -11,12 +11,6 @@ import (
 	"github.com/guionardo/gs-dev/internal/consts"
 	errs "github.com/guionardo/gs-dev/internal/errors"
 )
-
-var homeDir string
-
-func init() {
-	homeDir, _ = os.UserHomeDir()
-}
 
 // AssertDirectory asserts that the path is a directory and returns the absolute path
 func AssertDirectory(path string) (string, error) {
@@ -65,12 +59,4 @@ func AssertFilename(filename string) (string, error) {
 	_ = os.Remove(filename)
 
 	return filename, nil
-}
-
-// PathIsRoot checks if the path is the root of the filesystem
-func PathIsRoot(path string) bool {
-	// Clean the path to handle trailing slashes and relative components
-	cleaned := filepath.Clean(path)
-	// A path is the root if its parent is itself
-	return cleaned == filepath.Dir(cleaned)
 }

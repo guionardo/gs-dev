@@ -5,12 +5,12 @@ import (
 	"strings"
 
 	"github.com/guionardo/gs-dev/internal/cli"
-	"github.com/guionardo/gs-dev/internal/colors"
 	"github.com/guionardo/gs-dev/internal/commands"
 	"github.com/guionardo/gs-dev/internal/config"
 	"github.com/guionardo/gs-dev/internal/dialog"
 	"github.com/guionardo/gs-dev/internal/interfaces"
 	devservice "github.com/guionardo/gs-dev/internal/services/dev"
+	"github.com/guionardo/gs-dev/pkg/console"
 	"github.com/spf13/cobra"
 )
 
@@ -88,7 +88,7 @@ func (d *DevCommand) GetTUICommand() func() error {
 
 				return nil
 			})
-			if err == nil && dialog.Confirm(colors.Parse("{primary}[%s]{normal} Are you sure you want to add this root?", root), true) {
+			if err == nil && dialog.Confirm(console.Parse("{primary}[%s]{normal} Are you sure you want to add this root?", root), true) {
 				return d.service.AddRoot(root)
 			}
 
@@ -101,7 +101,7 @@ func (d *DevCommand) GetTUICommand() func() error {
 
 				return nil
 			})
-			if err == nil && dialog.Confirm(colors.Parse("{primary}[%s]{normal} Are you sure you want to delete this root?", root), true) {
+			if err == nil && dialog.Confirm(console.Parse("{primary}[%s]{normal} Are you sure you want to delete this root?", root), true) {
 				return d.service.DeleteRoot(root)
 			}
 

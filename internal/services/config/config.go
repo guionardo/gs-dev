@@ -1,10 +1,10 @@
 package configservice
 
 import (
-	"github.com/guionardo/gs-dev/internal/colors"
 	"github.com/guionardo/gs-dev/internal/config"
 	"github.com/guionardo/gs-dev/internal/dialog"
 	devservice "github.com/guionardo/gs-dev/internal/services/dev"
+	"github.com/guionardo/gs-dev/pkg/console"
 )
 
 type ConfigService struct {
@@ -35,11 +35,11 @@ func (c *ConfigService) EditConfig() error {
 	config.SetValue(c.configFile, devConfig)
 
 	if err = c.configFile.Save(); err != nil {
-		colors.Error("Error saving config: %v", err)
+		console.Error("Error saving config: %v", err)
 		return err
 	}
 
-	colors.Success("Config saved successfully")
+	console.Success("Config saved successfully")
 
 	return nil
 }

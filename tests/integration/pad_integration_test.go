@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/guionardo/gs-dev/internal/config"
-	"github.com/guionardo/gs-dev/internal/configurations"
 	pad_client "github.com/guionardo/gs-dev/internal/pad/client"
 	pad_server "github.com/guionardo/gs-dev/internal/pad/server"
 	padservice "github.com/guionardo/gs-dev/internal/services/pad"
@@ -31,29 +30,25 @@ func TestPadIntegration(t *testing.T) { // nolint:funlen
 	logger := slog.New(slog.NewTextHandler(t.Output(), nil))
 	configRoot, _ := config.NewConfigRoot(t.TempDir())
 	storageDirectory := t.TempDir()
-	config.SetValue(configRoot, &configurations.StorageConfig{
-		Type:    "fs",
-		Enabled: true,
-		Options: map[string]string{
-			storage.StoreDirectoryConfigKey: storageDirectory,
-		},
-	})
+	storageConfig := storage.FileSystemStorageConfig{
+		Directory: storageDirectory,
+	}
 
 	port, err := GetFreePort()
 	require.NoError(t, err, "there is no available port")
-	config.SetValue(configRoot, &configurations.PadServerConfig{
-		Port:             port,
-		StorageDirectory: storageDirectory,
+	config.SetValue(configRoot, &padservice.PadServerConfig{
+		Port:          port,
+		StorageConfig: storageConfig,
 	})
 	require.NoError(t, configRoot.Save())
 
-	storage, err := storage.NewFileSystemStorage(configRoot, ctx, logger)
+	storage, err := storage.NewFileSystemStorage(storageConfig, ctx, logger)
 	require.NoError(t, err, "unexpected error on NewFileSystemStorage")
 
 	service, err := padservice.NewPadServerService(configRoot, storage)
 	require.NoError(t, err, "unexpected error on NewPadServerService")
 
-	padConfig := configurations.NewPadServerConfig()
+	padConfig := padservice.NewPadServerConfig()
 
 	server := pad_server.NewPadGrpcServer(padConfig, service, logger)
 

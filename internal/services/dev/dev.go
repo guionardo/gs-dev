@@ -13,11 +13,11 @@ import (
 	"github.com/guionardo/gs-dev/internal/config"
 	"github.com/guionardo/gs-dev/internal/dialog"
 	findpattern "github.com/guionardo/gs-dev/internal/find_pattern"
-	"github.com/guionardo/gs-dev/internal/fs_tools"
 	"github.com/guionardo/gs-dev/internal/logging"
 	"github.com/guionardo/gs-dev/pkg/console"
 	postcommand "github.com/guionardo/gs-dev/pkg/post_command"
 	projectdetect "github.com/guionardo/gs-dev/pkg/project_detector"
+	"github.com/guionardo/gs-dev/pkg/tools/files"
 )
 
 type DevService struct {
@@ -73,7 +73,7 @@ func (d *DevService) AddRoot(root string) error {
 
 // CanAddRoot checks if the root can be added and returns the absolute path
 func (d *DevService) CanAddRoot(root string) (string, error) {
-	root, err := fs_tools.AssertDirectory(root)
+	root, err := files.AssertDirectory(root)
 	if err != nil {
 		return root, err
 	}

@@ -1,16 +1,16 @@
-package configurations
+package padservice
 
 import (
 	"github.com/google/uuid"
-	pathtools "github.com/guionardo/go/path_tools"
 	"github.com/guionardo/gs-dev/internal/errors"
+	"github.com/guionardo/gs-dev/internal/pad/storage"
 )
 
 type (
 	PadServerConfig struct {
-		Port             int    `yaml:"port" default:"8080"`
-		APIKey           string `yaml:"api_key" default:""`
-		StorageDirectory string `yaml:"storage_directory" default:""`
+		Port          int                             `yaml:"port" default:"8080"`
+		APIKey        string                          `yaml:"api_key" default:""`
+		StorageConfig storage.FileSystemStorageConfig `yaml:"storage"`
 	}
 )
 
@@ -29,6 +29,8 @@ func (c *PadServerConfig) Defaults() {
 	if akUUID, err := uuid.Parse(c.APIKey); err != nil || akUUID == uuid.Nil {
 		c.APIKey = ""
 	}
+
+	c.StorageConfig.Defaults()
 }
 
 func (c PadServerConfig) Validate() error {
@@ -42,15 +44,7 @@ func (c PadServerConfig) Validate() error {
 		}
 	}
 
-	if len(c.StorageDirectory) == 0 {
-		return errors.NewError(nil, "storage directory cannot be empty", false)
-	}
-
-	if !pathtools.DirExists(c.StorageDirectory) {
-		return errors.NewError(nil, "storage directory does not exist: %s", false, c.StorageDirectory)
-	}
-
-	return nil
+	return c.StorageConfig.Validate()
 }
 
 func (c PadServerConfig) Key() string {

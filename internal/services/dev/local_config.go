@@ -7,8 +7,8 @@ import (
 
 	"github.com/guionardo/gs-dev/app/build"
 	"github.com/guionardo/gs-dev/internal/consts"
-	"github.com/guionardo/gs-dev/internal/fs_tools"
 	projectdetector "github.com/guionardo/gs-dev/pkg/project_detector"
+	"github.com/guionardo/gs-dev/pkg/tools/files"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -41,7 +41,7 @@ func NewLocalConfig(directory string) (*LocalConfig, error) {
 
 // Parse tries to parse the local config file or detect configuration from the directory
 func (c *LocalConfig) Parse() error {
-	filename, err := fs_tools.AssertFilename(path.Join(c.directory, defaultConfigFile))
+	filename, err := files.AssertFilename(path.Join(c.directory, defaultConfigFile))
 	if err == nil {
 		// Try to parse the local config file
 		file, err2 := os.Open(filename) // nolint:gosec // G304 -- filename is validated

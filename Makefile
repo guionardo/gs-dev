@@ -18,7 +18,7 @@ setup: ## Check all required tools and install dependencies
 	@echo "Installing dependencies..."
 
 	@go install -v github.com/go-critic/go-critic/cmd/gocritic@latest
-	@go install -v github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	@go install -v github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 	@go install -v github.com/fzipp/gocyclo/cmd/gocyclo@latest
 	@go install -v golang.org/x/tools/cmd/goimports@latest
 
@@ -51,6 +51,9 @@ install: ## Build and install the application
 reinstall: install ## Remove and install the application
 	@gs-dev install --uninstall
 	@gs-dev install
+
+test: ## Run tests
+	@go test ./... -v -count=1
 	
 .PHONY: release
 release: ## Generate new release on github

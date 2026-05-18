@@ -148,11 +148,10 @@ func (cp *PadCliPostStruct) Run(ctx context.Context, output io.Writer) (err erro
 		return err
 	}
 
-	tree := console.NewTree("New pad")
-	tree.AddChild("ID=" + postID)
+	tree := console.NewTree(console.Styled("New pad: %s", console.Blue, postID))
 
 	for h, v := range headers {
-		tree.AddChild(fmt.Sprintf("%s=%v", h, v))
+		tree.AddChild(fmt.Sprintf("%s: %v", h, v))
 	}
 
 	return tree.Write(output)

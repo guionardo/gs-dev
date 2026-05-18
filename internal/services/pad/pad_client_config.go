@@ -1,4 +1,4 @@
-package configurations
+package padservice
 
 import (
 	"net/url"
@@ -13,15 +13,8 @@ type PadClientConfig struct {
 	APIKey     string `yaml:"api_key" default:""`
 }
 
-func NewPadClientConfig() *PadClientConfig {
-	config := &PadClientConfig{}
-	config.Defaults()
-
-	return config
-}
-
 func (c *PadClientConfig) Defaults() {
-	if beURL, err := url.Parse(c.BackendURL); err != nil || beURL.Scheme != "http" && beURL.Scheme != "https" {
+	if _, err := url.Parse(c.BackendURL); err != nil {
 		c.BackendURL = ""
 		c.Enabled = false
 	}

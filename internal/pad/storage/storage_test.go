@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/guionardo/gs-dev/internal/config"
-	"github.com/guionardo/gs-dev/internal/configurations"
 	"github.com/guionardo/gs-dev/internal/pad/storage"
 	"github.com/stretchr/testify/require"
 )
@@ -18,16 +16,12 @@ func TestFileSystemStorage(t *testing.T) {
 	folder := t.TempDir()
 	ctx := t.Context()
 	logger := slog.New(slog.NewTextHandler(t.Output(), nil)).With("test", "FileSystemStorage")
-	configFile, _ := config.NewConfigRoot(folder)
-	config.SetValue(configFile, &configurations.StorageConfig{
-		Enabled: true,
-		Type:    "fs",
-		Options: map[string]string{
-			storage.StoreDirectoryConfigKey: folder,
-		},
-	})
-	require.NoError(t, configFile.Save())
-	fs, err := storage.NewFileSystemStorage(configFile, ctx, logger)
+	config := storage.FileSystemStorageConfig{
+		Directory:  folder,
+		DefaultTTL: time.Hour,
+	}
+
+	fs, err := storage.NewFileSystemStorage(config, ctx, logger)
 	require.NoError(t, err)
 
 	const postCount = 1000

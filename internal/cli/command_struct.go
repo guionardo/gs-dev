@@ -14,11 +14,13 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/guionardo/go/flow"
+	"github.com/guionardo/go/set"
 	timetools "github.com/guionardo/go/time_tools"
 	"github.com/guionardo/gs-dev/internal/consts"
 	errs "github.com/guionardo/gs-dev/internal/errors"
 	string_tools "github.com/guionardo/gs-dev/internal/tools/strings_tools"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 type (
@@ -43,28 +45,33 @@ type (
 		stdin        bool
 	}
 	mapFlags map[int]flagMetadata
+
+	cobraCtxCommand string
 )
 
-var layouts = []string{
-	time.DateTime,
-	time.ANSIC,
-	time.UnixDate,
-	time.RubyDate,
-	time.RFC822,
-	time.RFC822Z,
-	time.RFC850,
-	time.RFC1123,
-	time.RFC1123Z,
-	time.RFC3339,
-	time.RFC3339Nano,
-	time.Kitchen,
-	time.Stamp,
-	time.StampMilli,
-	time.StampMicro,
-	time.StampNano,
-	time.DateOnly,
-	time.TimeOnly,
-}
+var (
+	layouts = []string{
+		time.DateTime,
+		time.ANSIC,
+		time.UnixDate,
+		time.RubyDate,
+		time.RFC822,
+		time.RFC822Z,
+		time.RFC850,
+		time.RFC1123,
+		time.RFC1123Z,
+		time.RFC3339,
+		time.RFC3339Nano,
+		time.Kitchen,
+		time.Stamp,
+		time.StampMilli,
+		time.StampMicro,
+		time.StampNano,
+		time.DateOnly,
+		time.TimeOnly,
+	}
+	ctxCommand cobraCtxCommand = "cobra"
+)
 
 // GenerateCobraCommand creates a cobra.Command from a command definition struct.
 //
@@ -453,7 +460,7 @@ func createRunCommand(instance CommandStruct, flagsmap mapFlags, argsSliceIndex 
 			return err
 		}
 
-		ctx, cancel := signal.NotifyContext(cmd.Context(), os.Interrupt)
+		ctx, cancel := signal.NotifyContext(context.WithValue(cmd.Context(), ctxCommand, cmd), os.Interrupt)
 		defer cancel()
 
 		if flagsmap.hasValidation() {
@@ -500,4 +507,30 @@ func ReadFromStdIn() (content []byte, err error) {
 	}
 
 	return
+}
+
+func GetCobraCommand(ctx context.Context) *cobra.Command {
+	ctxCmd := ctx.Value(ctxCommand)
+	cmd, _ := ctxCmd.(*cobra.Command)
+
+	return cmd
+}
+
+// GetFlagsSet read the flags that was set in the command
+func GetFlagsSet(ctx context.Context) (flags set.Set[string]) {
+	cmd := GetCobraCommand(ctx)
+	if cmd == nil {
+		return flags
+	}
+
+	flags = set.New[string]()
+
+	cmd.Flags().Visit(func(f *pflag.Flag) {
+		flags.Add(f.Name)
+	})
+	cmd.PersistentFlags().Visit(func(f *pflag.Flag) {
+		flags.Add(f.Name)
+	})
+
+	return flags
 }

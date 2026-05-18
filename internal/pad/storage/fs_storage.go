@@ -5,7 +5,7 @@ package storage
 
 import (
 	"context"
-	"strings"
+	"errors"
 
 	"fmt"
 	"log/slog"
@@ -17,10 +17,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/guionardo/gs-dev/internal/config"
-	"github.com/guionardo/gs-dev/internal/configurations"
 	"github.com/guionardo/gs-dev/internal/consts"
-	"github.com/guionardo/gs-dev/internal/errors"
+	errs "github.com/guionardo/gs-dev/internal/errors"
+	"github.com/guionardo/gs-dev/pkg/tools/files"
 
 	"github.com/guionardo/gs-dev/internal/interfaces"
 	postid "github.com/guionardo/gs-dev/internal/pad/post_id"
@@ -63,23 +62,9 @@ var _ interfaces.PadStorage = &FileSystemStorage{}
 // NewFileSystemStorage creates a FileSystemStorage bound to the directory
 // configured in StorageConfig. It starts a background goroutine that purges
 // expired posts every minute.
-func NewFileSystemStorage(configFile *config.ConfigRoot, ctx context.Context, logger *slog.Logger) (*FileSystemStorage, error) {
-	config, err := config.GetValue[configurations.StorageConfig](configFile)
+func NewFileSystemStorage(config FileSystemStorageConfig, ctx context.Context, logger *slog.Logger) (*FileSystemStorage, error) {
+	storeDirectory, err := files.AssertDirectory(config.Directory)
 	if err != nil {
-		return nil, errors.NewError(nil, "empty storage configuration", false)
-	}
-
-	if !config.Enabled {
-		return nil, errors.NewError(nil, "storage is disabled", false)
-	}
-
-	storeDirectory := strings.TrimSpace(config.Options[StoreDirectoryConfigKey])
-	if len(storeDirectory) == 0 {
-		return nil, errors.NewError(nil, "store directory is missing", false)
-	}
-
-	storeDirectory, _ = filepath.Abs(storeDirectory)
-	if err := os.MkdirAll(storeDirectory, consts.DirPermissions); err != nil {
 		return nil, err
 	}
 
@@ -105,7 +90,6 @@ func (s *FileSystemStorage) startMonitor(ctx context.Context) {
 			case postID := <-s.removeExpiredPosts:
 				_ = s.Delete(postID)
 			case <-ticker.C:
-				s.logger.Info("Purging expired posts")
 				_ = s.PurgeExpiredPosts()
 			}
 		}
@@ -113,7 +97,7 @@ func (s *FileSystemStorage) startMonitor(ctx context.Context) {
 }
 
 func (s *FileSystemStorage) getNextPostID() (pID postid.PostID) {
-	now := uint64(time.Now().UnixMilli() - int64(postIDOffset))
+	now := uint64(time.Now().UnixMilli() - int64(postIDOffset)) //nolint
 	if lastPostID.Load() > now {
 		now = lastPostID.Load() + 1
 	}
@@ -213,7 +197,7 @@ func (s *FileSystemStorage) Get(postID string) (content []byte, headers map[stri
 		return metadata.Content()
 	}
 
-	return nil, nil, errors.NewError(nil, "post not found", true)
+	return nil, nil, errs.NewError(nil, "post not found", true)
 }
 
 // Delete removes a pad by its post ID. Returns ErrPostIDNotFound if the pad
@@ -236,7 +220,7 @@ func (s *FileSystemStorage) Delete(postID string) error {
 			}
 		}
 
-		if os.IsNotExist(err) {
+		if os.IsNotExist(err) || errors.Is(err, errs.ErrPostIDNotFound) {
 			return nil, nil
 		}
 
@@ -263,10 +247,10 @@ func (s *FileSystemStorage) getPostMetadata(postID string) (metadata *postMetada
 			s.removeExpiredPosts <- postID // delete expired post
 		}()
 
-		return metadata, errors.ErrPostIDExpired
+		return metadata, errs.ErrPostIDExpired
 	}
 
-	return nil, errors.ErrPostIDNotFound
+	return nil, errs.ErrPostIDNotFound
 }
 
 // PurgeExpiredPosts scans all stored pads and removes those past their TTL.

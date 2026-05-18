@@ -7,8 +7,8 @@ import (
 	"path"
 
 	"github.com/guionardo/gs-dev/internal/consts"
-	"github.com/guionardo/gs-dev/internal/fs_tools"
 	"github.com/guionardo/gs-dev/internal/logging"
+	"github.com/guionardo/gs-dev/pkg/tools/files"
 
 	errs "github.com/guionardo/gs-dev/internal/errors"
 	"gopkg.in/yaml.v3"
@@ -33,7 +33,7 @@ type (
 const defaultConfigFileExtension = ".yml"
 
 func NewConfigRoot(configDir string) (config *ConfigRoot, err error) {
-	configDir, err = fs_tools.AssertDirectory(configDir)
+	configDir, err = files.AssertDirectory(configDir)
 	if err != nil {
 		logging.Debug("NewConfigRoot", slog.String("configDir", configDir), slog.Any("error", err))
 

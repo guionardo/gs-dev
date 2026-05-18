@@ -5,7 +5,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/guionardo/gs-dev/internal/fs_tools"
+	"github.com/guionardo/gs-dev/pkg/tools/files"
 )
 
 type DetectorFunc func(folder string) (projectData *ProjectData, err error)
@@ -20,7 +20,7 @@ var (
 )
 
 func DetectProject(folder string) (*ProjectData, error) {
-	assertedFolder, err := fs_tools.AssertDirectory(folder)
+	assertedFolder, err := files.AssertDirectory(folder)
 	if err != nil {
 		return nil, err
 	}

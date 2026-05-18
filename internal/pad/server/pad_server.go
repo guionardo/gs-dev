@@ -13,9 +13,9 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/guionardo/gs-dev/internal/configurations"
 	paderrors "github.com/guionardo/gs-dev/internal/errors"
 	pb "github.com/guionardo/gs-dev/internal/pad/proto"
+	padservice "github.com/guionardo/gs-dev/internal/services/pad"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -37,7 +37,7 @@ const (
 type PadGrpcServer struct {
 	pb.UnimplementedPadServiceServer
 
-	config    *configurations.PadServerConfig
+	config    *padservice.PadServerConfig
 	service   PadService
 	logger    *slog.Logger
 	isRunning atomic.Bool
@@ -55,7 +55,7 @@ type PadService interface {
 
 // NewPadGrpcServer creates a new PadGrpcServer with the given config, service, and logger.
 // The returned server is not running until Start is called.
-func NewPadGrpcServer(config *configurations.PadServerConfig, service PadService, logger *slog.Logger) *PadGrpcServer {
+func NewPadGrpcServer(config *padservice.PadServerConfig, service PadService, logger *slog.Logger) *PadGrpcServer {
 	return &PadGrpcServer{
 		config:  config,
 		service: service,

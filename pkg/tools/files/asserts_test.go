@@ -1,4 +1,4 @@
-package fs_tools_test
+package files_test
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/guionardo/gs-dev/internal/consts"
-	"github.com/guionardo/gs-dev/internal/fs_tools"
+	"github.com/guionardo/gs-dev/pkg/tools/files"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,7 +19,7 @@ func TestAssertDirectory(t *testing.T) {
 
 		dir := t.TempDir()
 		require.NoError(t, os.MkdirAll(dir+"/tmp_dir", consts.DirPermissions))
-		got, err := fs_tools.AssertDirectory(dir + "/tmp_dir")
+		got, err := files.AssertDirectory(dir + "/tmp_dir")
 		require.NoError(t, err)
 		require.Equal(t, dir+"/tmp_dir", got)
 	})
@@ -28,7 +28,7 @@ func TestAssertDirectory(t *testing.T) {
 		t.Parallel()
 
 		dir := t.TempDir()
-		got, err := fs_tools.AssertDirectory(dir + "/tmp_dir")
+		got, err := files.AssertDirectory(dir + "/tmp_dir")
 		require.Error(t, err)
 		require.Empty(t, got)
 	})
@@ -38,7 +38,7 @@ func TestAssertDirectory(t *testing.T) {
 
 		firstDir := getFirstDirectoryInHome(t)
 
-		got, err := fs_tools.AssertDirectory("$HOME/" + path.Base(firstDir))
+		got, err := files.AssertDirectory("$HOME/" + path.Base(firstDir))
 		require.NoError(t, err)
 		require.Equal(t, firstDir, got)
 	})
@@ -48,7 +48,7 @@ func TestAssertDirectory(t *testing.T) {
 
 		firstDir := getFirstDirectoryInHome(t)
 
-		got, err := fs_tools.AssertDirectory("~/" + path.Base(firstDir))
+		got, err := files.AssertDirectory("~/" + path.Base(firstDir))
 		require.NoError(t, err)
 		require.Equal(t, firstDir, got)
 	})
@@ -62,7 +62,7 @@ func TestAssertFilename(t *testing.T) {
 
 		filename := t.TempDir() + "/tmp_file.txt"
 		_ = os.WriteFile(filename, []byte("test"), 0600)
-		got, err := fs_tools.AssertFilename(filename)
+		got, err := files.AssertFilename(filename)
 		require.NoError(t, err)
 		require.Equal(t, filename, got)
 	})
@@ -71,7 +71,7 @@ func TestAssertFilename(t *testing.T) {
 		t.Parallel()
 
 		filename := t.TempDir() + "/tmp_file.txt"
-		got, err := fs_tools.AssertFilename(filename)
+		got, err := files.AssertFilename(filename)
 		require.NoError(t, err)
 		require.NotEmpty(t, got)
 	})
@@ -80,7 +80,7 @@ func TestAssertFilename(t *testing.T) {
 		t.Parallel()
 
 		dir := t.TempDir()
-		got, err := fs_tools.AssertFilename(dir)
+		got, err := files.AssertFilename(dir)
 		require.Error(t, err)
 		require.NotEmpty(t, got)
 	})
@@ -88,7 +88,7 @@ func TestAssertFilename(t *testing.T) {
 	t.Run("AssertFilename_with_empty_filename_should_return_error", func(t *testing.T) {
 		t.Parallel()
 
-		got, err := fs_tools.AssertFilename("")
+		got, err := files.AssertFilename("")
 		require.Error(t, err)
 		require.Empty(t, got)
 	})
