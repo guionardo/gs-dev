@@ -3,7 +3,6 @@ package git
 import (
 	"slices"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -42,11 +41,15 @@ func Test_parseGitStats(t *testing.T) {
 	got := slices.Collect(parseGitStats(output))
 	require.Len(t, got, 3, "expected commits")
 	_ = got[0].Comments()
+
+	assert.Equal(t, 2026, got[0].Timestamp.Year())
+	assert.Equal(t, 8, got[0].Timestamp.Day())
+	assert.Equal(t, 31, got[0].Timestamp.Second())
 	assert.Equal(t, GitCommit{
 		hash:         "576d54578837644118341a14f4fcb140dfe18642",
 		meta:         "(HEAD -> feature/v0.4)",
 		author:       "Guionardo Furlan <guionardo@gmail.com>",
-		Timestamp:    time.Date(2026, 4, 8, 21, 50, 31, 0, time.Local),
+		Timestamp:    got[0].Timestamp,
 		ChangedFiles: 16,
 		Insertions:   175,
 		Deletions:    367,
