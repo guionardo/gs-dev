@@ -20,3 +20,8 @@
 bin
 
 release
+
+output.txt
+store
+# Added by goreleaser init:
+dist/

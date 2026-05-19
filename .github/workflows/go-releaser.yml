@@ -1,0 +1,47 @@
+name: release
+on:
+  push:
+    tags:
+      - 'v*' # Triggers the release when a version tag like v1.0.0 is pushed
+
+permissions:
+  contents: write # Required for GoReleaser to publish to GitHub Releases
+
+jobs:
+  update-report-card:
+    name: Update report card
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request and extract Report Card
+        run: |
+          curl -s -o /dev/null  -w '%{http_code}' 'https://goreportcard.com/checks' --data-raw 'repo=github.com%2Fguionardo%2Fgs-dev'
+          curl -s 'https://goreportcard.com/report/github.com/guionardo/gs-dev' | grep "var response = " | awk -F' ' '{for (i=4; i<NF; i++) printf("%s ", $i)}' > report.json
+
+      - name: Generate summary
+        run: |
+          echo "### Resume! :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "Grade        $(cat report.json | jq .grade)" >> $GITHUB_STEP_SUMMARY
+          echo "Average      $(cat report.json | jq .average)" >> $GITHUB_STEP_SUMMARY
+          echo "Last Refresh $(cat report.json | jq .last_refresh)" >> $GITHUB_STEP_SUMMARY
+          echo "Did error    $(cat report.json | jq .did_error)" >> $GITHUB_STEP_SUMMARY
+  
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # GoReleaser needs full history to generate release notes
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 'stable' # Or define a specific version like '1.22'
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

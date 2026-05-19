@@ -4,14 +4,24 @@ package main
 
 import (
 	"flag"
+	"log"
 	"log/slog"
 	"os"
 	"path/filepath"
 
-	"github.com/guionardo/gs-dev/internal/cmd"
-	outputfile "github.com/guionardo/gs-dev/internal/output_file"
-	pathtools "github.com/guionardo/gs-dev/internal/path_tools"
-	plugins_register "github.com/guionardo/gs-dev/plugins"
+	pathtools "github.com/guionardo/go/path_tools"
+	"github.com/guionardo/gs-dev/internal/commands"
+	"github.com/guionardo/gs-dev/internal/commands/dev"
+	"github.com/guionardo/gs-dev/internal/commands/fav"
+	gitstats "github.com/guionardo/gs-dev/internal/commands/git_stats"
+	"github.com/guionardo/gs-dev/internal/commands/install"
+	padcommand "github.com/guionardo/gs-dev/internal/commands/pad"
+	"github.com/guionardo/gs-dev/internal/commands/setup"
+	shellinit "github.com/guionardo/gs-dev/internal/commands/shell_init"
+	"github.com/guionardo/gs-dev/internal/commands/url"
+	"github.com/guionardo/gs-dev/internal/logging"
+
+	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )
 
@@ -19,10 +29,10 @@ func main() {
 	var docsFolder string
 	flag.StringVar(&docsFolder, "docs", "../../docs", "docs folder")
 	flag.Parse()
-	slog.SetLogLoggerLevel(slog.LevelDebug)
-	output, err := outputfile.NewOutputFile("")
-	rootCmd := cmd.GetRootCmd([]string{}, plugins_register.GetRegisteredPlugins(output)...)
-	docsFolder, err = filepath.Abs(docsFolder)
+	logging.Setup(os.Stdout)
+
+	rootCmd := getRootCommand()
+	docsFolder, err := filepath.Abs(docsFolder)
 	if err != nil {
 		slog.Error("Failed to get docs folder", slog.String("folder", docsFolder), slog.Any("error", err))
 		return
@@ -40,4 +50,24 @@ func main() {
 		return
 	}
 	slog.Info("Documentation created", slog.String("folder", docsFolder))
+}
+
+func getRootCommand() *cobra.Command {
+	commandsManager, err := commands.NewCommandManager()
+	if err != nil {
+		log.Fatalf("Error creating commands manager: %v", err)
+	}
+
+	commandsManager.Register(
+		&shellinit.InitCommand{},
+		&dev.DevCommand{},
+		&fav.FavCommand{},
+		&gitstats.GitStatsCommand{},
+		&install.InstallCommand{},
+		&url.UrlCommand{},
+		&setup.SetupCommand{},
+		&padcommand.PadCliCommand{},
+		&padcommand.PadServerCommand{},
+	)
+	return commandsManager.GetRootCommand()
 }

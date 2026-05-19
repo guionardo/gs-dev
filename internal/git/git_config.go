@@ -1,8 +1,9 @@
 package git
 
 import (
-	"fmt"
+	"errors"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -30,10 +31,12 @@ import (
 	vscode-merge-base = origin/develop
 */
 type (
+	// GitConfig represents the git config file
 	GitConfig struct {
 		// t       *toml.Tree
 		// Core    GitConfigCore
-		Remotes []GitConfigRemote
+		Remotes        []GitConfigRemote
+		RepositoryName string
 	}
 	// GitConfigCore struct {
 	// 	RepositoryFormatVersion int
@@ -41,6 +44,8 @@ type (
 	// 	Bare                    bool
 	// 	LogAllRefUpdates        bool
 	// }
+
+	// GitConfigRemote represents a remote repository in the git config file
 	GitConfigRemote struct {
 		Name  string
 		URL   string
@@ -49,52 +54,97 @@ type (
 )
 
 func NewGitConfig(filename string) (*GitConfig, error) {
-	content, err := os.ReadFile(filename)
+	remotes, err := GetGitRemotes(filename)
 	if err != nil {
 		return nil, err
 	}
-	var remoteName, remoteUrl, remoteFetch string
-	var remotes = make([]GitConfigRemote, 0, 1)
-	for _, line := range strings.Split(string(content), "\n") {
-		if len(remoteName) > 0 && len(remoteUrl) > 0 && len(remoteFetch) > 0 {
+
+	var repositoryName string
+	if len(remotes) > 0 {
+		repositoryName = strings.TrimSuffix(filepath.Base(remotes[0].URL), ".git")
+	} else {
+		repositoryName = filepath.Base(filepath.Dir(filename))
+	}
+
+	return &GitConfig{
+		Remotes:        remotes,
+		RepositoryName: repositoryName,
+	}, nil
+}
+
+func GetGitRemotes(filename string) ([]GitConfigRemote, error) {
+	content, err := os.ReadFile(filepath.Clean(filename))
+	if err != nil {
+		return nil, err
+	}
+
+	remotes := make([]GitConfigRemote, 0, 1)
+
+	var (
+		remoteName  string
+		remoteURL   string
+		remoteFetch string
+		inRemote    bool
+	)
+
+	flushRemote := func() {
+		if remoteName != "" && remoteURL != "" && remoteFetch != "" {
 			remotes = append(remotes, GitConfigRemote{
 				Name:  remoteName,
-				URL:   remoteUrl,
+				URL:   remoteURL,
 				Fetch: remoteFetch,
 			})
-			remoteName = ""
-			remoteUrl = ""
-			remoteFetch = ""
 		}
-		line = strings.Trim(line, " \n\t")
+	}
+
+	for line := range strings.SplitSeq(string(content), "\n") {
+		line = strings.TrimSpace(line)
 		if len(line) == 0 {
 			continue
 		}
-		if strings.HasPrefix(line, "[remote \"") {
-			if w := strings.Split(line, "\""); len(w) == 3 {
-				remoteName = w[1]
+
+		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
+			flushRemote()
+
+			inRemote = false
+			remoteName = ""
+			remoteURL = ""
+			remoteFetch = ""
+
+			if strings.HasPrefix(line, "[remote \"") {
+				if w := strings.Split(line, "\""); len(w) >= 2 { //nolint:mnd
+					remoteName = strings.TrimSpace(w[1])
+					inRemote = len(remoteName) > 0
+				}
 			}
 
 			continue
 		}
-		if len(remoteName) > 0 && strings.HasPrefix(line, "url = ") {
-			remoteUrl, _ = strings.CutPrefix(line, "url = ")
+
+		if !inRemote {
 			continue
 		}
-		if len(remoteName) > 0 && strings.HasPrefix(line, "fetch = ") {
+
+		if strings.HasPrefix(line, "url = ") {
+			remoteURL, _ = strings.CutPrefix(line, "url = ")
+			remoteURL = strings.TrimSpace(remoteURL)
+
+			continue
+		}
+
+		if strings.HasPrefix(line, "fetch = ") {
 			remoteFetch, _ = strings.CutPrefix(line, "fetch = ")
+			remoteFetch = strings.TrimSpace(remoteFetch)
+
 			continue
 		}
-
 	}
+
+	flushRemote()
+
 	if len(remotes) == 0 {
-		return nil, fmt.Errorf("no remotes in this repository")
+		return nil, errors.New("no remotes in this repository")
 	}
 
-	return &GitConfig{
-		// Core: GitConfigCore{
-		// 	RepositoryFormatVersion: tree.GetPath([]string{"core", "repositoryformatversion"}).(int),
-		// },
-		Remotes: remotes,
-	}, nil
+	return remotes, nil
 }

@@ -1,39 +1,40 @@
 package main
 
 import (
-	"log/slog"
-	"os"
+	"log"
 
-	"github.com/guionardo/gs-dev/app/build"
-	"github.com/guionardo/gs-dev/internal/cmd"
-	plugins_register "github.com/guionardo/gs-dev/plugins"
-	"github.com/guionardo/gs-dev/plugins/manager"
+	"github.com/guionardo/gs-dev/internal/commands"
+	"github.com/guionardo/gs-dev/internal/commands/dev"
+	"github.com/guionardo/gs-dev/internal/commands/fav"
+	gitstats "github.com/guionardo/gs-dev/internal/commands/git_stats"
+	"github.com/guionardo/gs-dev/internal/commands/install"
+	padcommand "github.com/guionardo/gs-dev/internal/commands/pad"
+	"github.com/guionardo/gs-dev/internal/commands/setup"
+	shellinit "github.com/guionardo/gs-dev/internal/commands/shell_init"
+	"github.com/guionardo/gs-dev/internal/commands/url"
+	"github.com/guionardo/gs-dev/internal/logging"
 )
 
-// preRunArgs is a function that runs before the CLI command is executed,
-func preRunArgs() []string {
-	logLevel := slog.LevelInfo
-	args := make([]string, 0, len(os.Args))
-
-	for _, arg := range os.Args[1:] {
-		if arg == "--debug" {
-			logLevel = slog.LevelDebug
-			continue
-		}
-
-		args = append(args, arg)
-	}
-	slog.SetLogLoggerLevel(logLevel)
-	slog.Debug("Debug mode enabled")
-	return args
-}
-
 func main() {
-	args := preRunArgs()
+	commandsManager, err := commands.NewCommandManager()
+	if err != nil {
+		log.Fatalf("Error creating commands manager: %v", err)
+	}
 
-	rootCmd := cmd.GetRootCmd(args, plugins_register.GetRegisteredPlugins(manager.Output)...)
+	logging.Logger()
 
-	slog.Debug("Starting gs-dev", slog.String("version", build.Version))
+	commandsManager.Register(
+		&shellinit.InitCommand{},
+		&dev.DevCommand{},
+		&fav.FavCommand{},
+		&gitstats.GitStatsCommand{},
+		&install.InstallCommand{},
+		&url.UrlCommand{},
+		&setup.SetupCommand{},
+		&padcommand.PadCliCommand{},
+		&padcommand.PadServerCommand{},
+	)
+	rootCmd := commandsManager.GetRootCommand()
 
-	rootCmd.Execute()
+	_ = rootCmd.Execute()
 }

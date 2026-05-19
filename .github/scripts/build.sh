@@ -14,22 +14,24 @@ echo VERSION: $VERSION
 _goenv="$(go env -json)"
 _goarch="$(echo $_goenv | jq .GOARCH | tr -d \")"
 _goos="$(echo $_goenv | jq .GOOS | tr -d \")"
+_gopath="$(echo $_goenv | jq .GOPATH | tr -d \")"
 BUILD_INFO="$BUILD_DATE | ${USER}@${HOSTNAME} | ${_goarch}/${_goos} | ${GIT_COMMIT}"
 echo BUILD_INFO: $BUILD_INFO
 
 if [ "$1" == "install" ]; then
   cmd="install"
-  oper="installing on $GOPATH/bin/gs-dev"
+  oper="installing on $_gopath/bin/gs-dev"
 else
   mkdir -p bin
   cmd="build -o bin/gs-dev"
   oper="building to bin/gs-dev"
 fi
 
-go $cmd -ldflags="-X 'github.com/guionardo/gs-dev/app/build.BuildInfo=$BUILD_INFO' -X 'github.com/guionardo/gs-dev/app/build.Version=$VERSION'" cmd/gs-dev.go
+go $cmd -ldflags="-X 'github.com/guionardo/gs-dev/app/build.BuildInfo=$BUILD_INFO' -X 'github.com/guionardo/gs-dev/app/build.Version=$VERSION'" cmd/gs-dev/gs-dev.go
 if [ $? == 0 ]; then
   echo "Operation: $oper OK"
 else
   echo "Operation: $oper FAILED"
   exit 1
 fi
+

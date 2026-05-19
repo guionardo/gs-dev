@@ -2,7 +2,7 @@
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -25,8 +25,17 @@ repos:
       - id: go-build
       # - id: go-mod-tidy
 
-  # - repo: https://github.com/koalaman/shellcheck-precommit
-  #   rev: v0.10.0
-  #   hooks:
-  #     - id: shellcheck
-  #       args: ["--severity=warning", "--exclude=2068,1091,2199"] # Optionally only show errors and warnings
+  - repo: local
+    hooks:
+      - id: commitlint
+        name: Commit Lint
+        entry: commitlint lint --message
+        stages: [commit-msg]
+        language: system
+        description: "Commit Lint to Conventional Commits pattern"
+      - id: govulncheck
+        name: Go Vulnerability Check
+        entry: govulncheck ./...
+        stages: [pre-commit]
+        language: system
+        description: "Go Vulnerability Check"

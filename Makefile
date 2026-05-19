@@ -3,9 +3,10 @@ SHELL := /bin/bash
 REQUIRED_BINS := go
 .DEFAULT_TARGET: help
 
-.PHONY: help
 help: ## Display this help
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' Makefile | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z0-9_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+##@ Setup
 
 setup: ## Check all required tools and install dependencies
 	$(if $(shell cat .vscode/.setup 2> /dev/null),$(echo Setup already done!))
@@ -17,7 +18,7 @@ setup: ## Check all required tools and install dependencies
 	@echo "Installing dependencies..."
 
 	@go install -v github.com/go-critic/go-critic/cmd/gocritic@latest
-	@go install -v github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	@go install -v github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 	@go install -v github.com/fzipp/gocyclo/cmd/gocyclo@latest
 	@go install -v golang.org/x/tools/cmd/goimports@latest
 
@@ -25,28 +26,38 @@ setup: ## Check all required tools and install dependencies
 	@touch .vscode/.setup
 	@echo "Setup done!"
 
+.PHONY: docs
+docs: ## Generate documentation for the application
+	@go get github.com/spf13/cobra/doc@latest
+	@go run cmd/docs/docs.go --docs=./docs
 
-.PHONY: lint
+proto: ## Generate gRPC code from proto files
+	@protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative internal/pad/proto/pad.proto
+
+##@ Linting
+
 lint: ## Execute syntatic analysis in the code and autofix minor problems
 	@golangci-lint run --fix
 
 
 version: ## Show the current version of the application
-	{ \
-	set -e ;\
-   	VERSION=$$(git describe --tags --abbrev=0 | tr -d '\n') ;\
-	echo "Version: $$(VERSION)" \
-	}
+	@echo "Version: $$(git describe --tags --abbrev=0 | tr -d '\n')" 
+	
 
-.PHONY: build
 build: ## Build the application
 	@.github/scripts/build.sh
 
-.PHONY: install
-install: build ## Build and install the application
-	@mv bin/gs-dev $(GOPATH)/bin
-	@echo "Application installed successfully -> $(GOPATH)/bin/gs-dev"
+install: ## Build and install the application
+	@.github/scripts/build.sh install
+reinstall: install ## Remove and install the application
+	@gs-dev install --uninstall
+	@gs-dev install
 
+test: ## Run tests
+	@go test ./... -v -count=1
+	
 .PHONY: release
 release: ## Generate new release on github
 	@python3 .github/scripts/new_release.py
+
+

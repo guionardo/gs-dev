@@ -3,9 +3,13 @@ package config
 import (
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetConfigDir(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name    string
 		appName string
@@ -15,9 +19,9 @@ func TestGetConfigDir(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetConfigDir(tt.appName); !strings.HasSuffix(got, tt.want) {
-				t.Errorf("GetConfigDir() = %v, want %v", got, tt.want)
-			}
+			t.Parallel()
+
+			require.True(t, strings.HasSuffix(GetConfigDir(tt.appName), tt.want), "GetConfigDir() should return the correct config dir")
 		})
 	}
 }

@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -10,8 +11,6 @@ import (
 type ShellInfo struct {
 	Name   string
 	RCFile string
-
-	// homePath string
 }
 
 func NewShellInfo() (si *ShellInfo, err error) {
@@ -19,12 +18,13 @@ func NewShellInfo() (si *ShellInfo, err error) {
 	// Detect shell
 	shell := os.Getenv("SHELL")
 	if len(shell) == 0 {
-		err = fmt.Errorf("no SHELL environment detected")
+		err = errors.New("no SHELL environment detected")
 		return
 	}
+
 	homePath, err := os.UserHomeDir()
 	if err != nil {
-		err = fmt.Errorf("error getting user home dir - %v", err)
+		err = fmt.Errorf("error getting user home dir - %w", err)
 		return
 	}
 
@@ -36,11 +36,14 @@ func NewShellInfo() (si *ShellInfo, err error) {
 		if strings.HasSuffix(shell, sh) {
 			si.Name = sh
 			si.RCFile = path.Join(homePath, "."+sh+"rc")
+
 			break
 		}
 	}
+
 	if len(si.RCFile) == 0 {
 		err = fmt.Errorf("unexpected shell - %s", shell)
 	}
+
 	return
 }
