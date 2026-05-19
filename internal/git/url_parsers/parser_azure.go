@@ -6,8 +6,8 @@ import (
 )
 
 var (
-	AzureHTTPSRegex = regexp.MustCompile(`(?m)https://(.*)@dev.azure.com/(.*)/(.*)/_git/(.*)`)
-	AzureSSHRegex   = regexp.MustCompile(`(?m)git@ssh.dev.azure.com:(v[0-9]{1,2})/(.*)/(.*)/(.*)`)
+	AzureHTTPSRegex = regexp.MustCompile(`^https://([^@]+)@dev\.azure\.com/([^/]+)/([^/]+)/_git/([^/]+)$`)
+	AzureSSHRegex   = regexp.MustCompile(`(?m)git@ssh\.dev\.azure\.com:(v[0-9]{1,2})/(.*)/(.*)/(.*)`)
 )
 
 // gitAzureHttpUrlParser parses the url as a Azure HTTPS URL
