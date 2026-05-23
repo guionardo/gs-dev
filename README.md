@@ -6,7 +6,7 @@ Guiosoft Development Assistant
 [![License](https://img.shields.io/github/license/guionardo/gs-dev)](./LICENSE)
 [![CodeQL](https://github.com/guionardo/gs-dev/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/guionardo/gs-dev/actions/workflows/github-code-scanning/codeql)
 [![Go Report Card](https://goreportcard.com/badge/github.com/guionardo/gs-dev)](https://goreportcard.com/report/github.com/guionardo/gs-dev)
-[![Go Release](https://github.com/guionardo/gs-dev/actions/workflows/release.yml/badge.svg)](https://github.com/guionardo/gs-dev/actions/workflows/release.yml)
+[![release](https://github.com/guionardo/gs-dev/actions/workflows/go-releaser.yml/badge.svg)](https://github.com/guionardo/gs-dev/actions/workflows/go-releaser.yml)
 
 A CLI development assistant providing rapid folder access, git statistics, URL management, interactive TUI, shell integration, and an ephemeral gRPC pad service for sharing text snippets.
 
